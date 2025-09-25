@@ -2,12 +2,37 @@ from FlightManagementLab_UOfBath.Entities.Destination import Destination
 from FlightManagementLab_UOfBath.Repositories.DestinationRepository import DestinationRepository
 import sqlite3
 
+from FlightManagementLab_UOfBath.Services.DestinationService import DestinationService
+
+destinationService = DestinationService()
+
 def startRepositories():
     global destinationRepo
     destinationRepo = DestinationRepository("FlightManagementDB.db")
 
-def viewFlightInformation():
-    pass
+def flightMenu():
+    print("Flight Information \n")
+    while True:
+        userinputraw = input("Would you like to: \n"
+                          "1. View a flights information \n"
+                          "2. Update a flights information \n"
+                          "3. Add a flight \n"
+                          "4. Delete a flight \n"
+                          "* input 'back' to return to main menu * \n")
+
+        userinput = userinputraw.strip().lower()
+
+        if userinput == "back":
+            return
+
+        if userinput == "1":
+            pass
+        elif userinput == "2":
+            pass
+        elif userinput == "3":
+            pass
+        elif userinput == "4":
+            pass
 
 def addNewFlight():
     pass
@@ -21,7 +46,7 @@ def assignPilot():
 def viewPilotSchedule():
     pass
 
-def viewUpdateDestinationInfo():
+def destinationMenu(service: DestinationService):
     print("Destination Information \n")
     while True:
         userinput = input("Would you like to: \n"
@@ -35,16 +60,15 @@ def viewUpdateDestinationInfo():
             airportId = input("Please enter the airport code for the destination you would like to view. \n")
             if airportId.strip().lower() == "back":
                 continue
-            else:
-                airportId = airportId.strip().upper()
 
-            try:
-                destination = destinationRepo.get(airportId=airportId)
+            airportId = airportId.strip().upper()
+            destination = service.getDestination(airportId)
+
+            if destination:
                 print(f"Airport: {destination.airportName} ({destination.airportId}) "
                       f"in {destination.city}, {destination.country}, {destination.continent}.")
-            except ValueError as e:
-                print(e)
-                print("\n")
+            else:
+                print(f"No destination found with airport code {airportId}\n")
 
         elif userinput.strip().lower() == "2":
             # TODO: add update call
@@ -84,7 +108,15 @@ def viewUpdateDestinationInfo():
                       and continent.strip().lower() != "asia"
                       and continent.strip().lower() != "oceania"
                       and continent.strip().lower() != "antarctica"):
-                    print("That is not a valid continent.\n")
+                    print("That is not a valid continent. Please see the below valid continents: \n"
+                          "North America \n"
+                          "South America \n"
+                          "Europe \n"
+                          "Africa \n"
+                          "Asia \n"
+                          "Oceania \n"
+                          "Antarctica \n")
+                    continue
                 else:
                     continent = continent.strip().lower()
                     break
@@ -156,7 +188,7 @@ def main():
         elif userinput.strip().lower() == "5":
             viewPilotSchedule()
         elif userinput.strip().lower() == "6":
-            viewUpdateDestinationInfo()
+            destinationMenu(destinationService)
 
 main()
 
