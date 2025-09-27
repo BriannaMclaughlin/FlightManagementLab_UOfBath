@@ -1,16 +1,51 @@
+from datetime import datetime
+
 from FlightManagementLab_UOfBath.Entities.Destination import Destination
 from FlightManagementLab_UOfBath.Repositories.DestinationRepository import DestinationRepository
 import sqlite3
 
 from FlightManagementLab_UOfBath.Services.DestinationService import DestinationService
+from FlightManagementLab_UOfBath.Services.FlightService import FlightService
 
 destinationService = DestinationService()
+flightService = FlightService()
 
 def startRepositories():
     global destinationRepo
     destinationRepo = DestinationRepository("FlightManagementDB.db")
 
-def flightMenu():
+def ask_for_datetime(label: str) -> datetime | None:
+    while True:
+        year = input(f"Enter {label} year: ")
+        if not year.isnumeric():
+            print("Invalid year")
+            continue
+        year = int(year)
+
+        month = input(f"Enter {label} month: ")
+        if not month.isnumeric():
+            print("Invalid month")
+            continue
+        month = int(month)
+
+        day = input(f"Enter {label} day: ")
+        if not day.isnumeric() or int(day) > 31:
+            print("Invalid day")
+            continue
+        day = int(day)
+
+        timeRaw = input(f"Enter {label} time (HH:MM): ")
+        try:
+            hour, minute = map(int, timeRaw.split(":"))
+            if not (0 <= hour <= 23 and 0 <= minute <= 59):
+                raise ValueError
+        except Exception:
+            print("Invalid time")
+            continue
+
+        return datetime(year, month, day, hour, minute)
+
+def flightMenu(service: FlightService):
     print("Flight Information \n")
     while True:
         userinputraw = input("Would you like to: \n"
@@ -26,19 +61,117 @@ def flightMenu():
             return
 
         if userinput == "1":
-            pass
+            while True:
+                userinputraw = input("Please enter the flight id or 'find' to lookup the flight id. \n")
+                userinput = userinputraw.strip().lower()
+
+                if userinput == "find":
+                    #TODO: create a search by details
+                    pass
+                elif userinput.isnumeric():
+                    flight = service.getFlight(int(userinput))
+                else:
+                    print("That was not a valid input. Flight ids are numeric only. \n")
+                    continue
+
+                #TODO: this can be improved on, join the destinations and pilotAssignments in the query to add here.
+                if flight:
+                    print(f"Flight: {flight.id} \n"
+                          f"Status: {flight.status} \n"
+                          f"Route: {flight.originAirport} to {flight.destinationAirport} \n"
+                          f"Scheduled Departure: {flight.scheduledDepart} \n"
+                          f"Scheduled Arrival: {flight.scheduledArrive} \n")
+                    break
+                else:
+                    print(f"No flight found with id: {userinput}")
+                    break
+
+
         elif userinput == "2":
             pass
         elif userinput == "3":
-            pass
+            continueInput = True
+            origin = None
+            destination = None
+            status = None
+            scheduledDepart = None
+            scheduledArrive = None
+            actualDepart = None
+            actualArrive = None
+            while continueInput:
+                userinputraw = input("Please input the following details: \n"
+                                     "What is the airport code for the flights origin? \n")
+
+                if userinputraw.strip().lower() == "back":
+                    continueInput = False
+
+                userinput = userinputraw.strip().upper()
+
+                if destinationService.destinationExists(userinput):
+                    origin = destinationService.getDestination(userinput).airportId
+                    break
+                else:
+                    continue
+
+            while continueInput:
+                userinputraw = input("What is the airport code for the flights destination? \n")
+
+                if userinputraw.strip().lower() == "back":
+                    continueInput = False
+
+                userinput = userinputraw.strip().upper()
+
+                if destinationService.destinationExists(userinput):
+                    destination = destinationService.getDestination(userinput).airportId
+                    break
+                else:
+                    continue
+
+            while continueInput:
+                userinputraw = input("Does this flight have a schedule yet? Y/N \n")
+                userinput = userinputraw.strip().lower()
+
+                if userinput == "back":
+                    continueInput = False
+                elif userinput == "n":
+                    break
+                elif userinput == "y":
+                    status = "Scheduled"
+
+                    scheduledDepart = ask_for_datetime("departure")
+                    scheduledArrive = ask_for_datetime("arrival")
+
+                flightService.addFlight(status=status,
+                                        originAirport=origin,
+                                        destinationAirport=destination,
+                                        scheduledDepart=scheduledDepart,
+                                        scheduledArrive=scheduledArrive,
+                                        actualDepart=actualDepart,
+                                        actualArrive=actualArrive
+                                        )
+
+                print("Flight successfully added!")
+                continueInput = False
+
         elif userinput == "4":
-            pass
+            while True:
+                userinputraw = input("Please enter the flight id to delete or 'find' to lookup the flight id. \n")
+                userinput = userinputraw.strip().lower()
 
-def addNewFlight():
-    pass
+                if userinput == "find":
+                    # TODO: create a search by details
+                    pass
 
-def updateFlight():
-    pass
+                if userinput == "back":
+                    break
+
+                #TODO: add an are you sure option that shows what is being deleted.
+                if userinput.isnumeric():
+                    flightService.deleteFlight(int(userinput))
+                    print(f"Flight with id {userinput} has been deleted.")
+                else:
+                    print("That is not a valid flight id.")
+
 
 def assignPilot():
     pass
@@ -165,29 +298,20 @@ def main():
             userinput = input("Please enter either Y or N \n")
 
     while True:
-        print("Menu: \n"
-              "1. View flight information \n"
-              "2. Add a new flight \n"
-              "3. Update a flight \n"
-              "4. Assign a pilot to a flight \n"
-              "5. View Pilot schedule \n"
-              "6. View/Update Destination Information \n")
+        print("Main Menu: \n"
+              "1. Flights \n"
+              "2. Pilots \n"
+              "3. Destinations \n")
 
         userinput = input("Please input your command number, or 'exit' to close the system \n")
 
         if userinput.strip().lower() == "exit":
             return
         elif userinput.strip().lower() == "1":
-            viewFlightInformation()
+            flightMenu(flightService)
         elif userinput.strip().lower() == "2":
-            addNewFlight()
-        elif userinput.strip().lower() == "3":
-            updateFlight()
-        elif userinput.strip().lower() == "4":
-            assignPilot()
-        elif userinput.strip().lower() == "5":
             viewPilotSchedule()
-        elif userinput.strip().lower() == "6":
+        elif userinput.strip().lower() == "3":
             destinationMenu(destinationService)
 
 main()

@@ -12,3 +12,11 @@ class DestinationService():
             print(e)
             print("\n")
             return None
+
+    def destinationExists(self, airportId: str):
+        try:
+            destination = self.destinationRepo.get(airportId=airportId)
+            if destination:
+                return True
+        except ValueError as e:
+            return False
