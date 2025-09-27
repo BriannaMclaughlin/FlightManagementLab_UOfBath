@@ -1,12 +1,16 @@
 from dataclasses import dataclass
 import datetime
+from typing import Optional
+
 
 @dataclass
 class Flight:
-    id: int
-    flightNumber: str
     status: str
     scheduledDepart: datetime
     scheduledArrive: datetime
-    actualDepart: datetime
-    actualArrive: datetime
+    originAirport: str  # Foreign Key
+    destinationAirport: str  # Foreign Key
+    actualDepart: Optional[datetime] = None # Default is none for before flight happens
+    actualArrive: Optional[datetime] = None
+    id: Optional[int] = None # Primary Key -> DB will assign
+    # could add plane id if I want to create a plane entity.

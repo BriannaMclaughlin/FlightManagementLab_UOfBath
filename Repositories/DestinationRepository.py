@@ -54,13 +54,6 @@ class DestinationRepository(Repository[Destination]):
             return [Destination(*row) for row in cursor.fetchall()]
 
     def add(self, destination: Destination | None = None, **kwargs: object) -> None:
-        """
-        Add a new destination. Can pass either a Destination object or kwargs.
-        Example:
-            repo.add(Destination("YYZ", "North America", "Canada", "Toronto"))
-        or
-            repo.add(airportId="YYZ", continent="North America", country="Canada", city="Toronto")
-        """
         if destination:
             airportId, airportName, continent, country, city = (
                 destination.airportId,
