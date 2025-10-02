@@ -5,7 +5,7 @@ from .Repository import Repository
 from ..Entities.FlightAssignment import FlightAssignment
 
 
-class FlightAssignmentRepository(Repository[FlightAssignment]):
+class FlightAssignmentRepository():
     def __init__(self, db_path: str) -> None:
         self.db_path = db_path
         self.create_table()

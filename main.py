@@ -5,12 +5,14 @@ from FlightManagementLab_UOfBath.Repositories.DestinationRepository import Desti
 import sqlite3
 
 from FlightManagementLab_UOfBath.Services.DestinationService import DestinationService
+from FlightManagementLab_UOfBath.Services.FlightAssignmentService import FlightAssignmentService
 from FlightManagementLab_UOfBath.Services.FlightService import FlightService
 from FlightManagementLab_UOfBath.Services.PilotService import PilotService
 
 destinationService = DestinationService()
 flightService = FlightService()
 pilotService = PilotService()
+flightAssignmentService = FlightAssignmentService()
 
 #TODO: change all variables and methods to snake case because python. Only classes should be camel case
 
@@ -66,6 +68,7 @@ def flight_menu(service: FlightService):
 
         if userinput == "1":
             while True:
+                flight_details = None
                 userinputraw = input("Please enter the flight id or 'find' to lookup the flight id. \n")
                 userinput = userinputraw.strip().lower()
 
@@ -73,18 +76,32 @@ def flight_menu(service: FlightService):
                     #TODO: create a search by details
                     pass
                 elif userinput.isnumeric():
-                    flight = service.getFlight(int(userinput))
+                    flight_details = flightService.get_flight_details(int(userinput))
                 else:
                     print("That was not a valid input. Flight ids are numeric only. \n")
                     continue
 
                 #TODO: this can be improved on, join the destinations and pilotAssignments in the query to add here.
-                if flight:
-                    print(f"Flight: {flight.id} \n"
-                          f"Status: {flight.status} \n"
-                          f"Route: {flight.originAirport} to {flight.destinationAirport} \n"
-                          f"Scheduled Departure: {flight.scheduledDepart} \n"
-                          f"Scheduled Arrival: {flight.scheduledArrive} \n")
+                if flight_details is not None:
+                    to_print = (f"Flight: {flight_details.id} \n"
+                          f"Status: {flight_details.status} \n"
+                          f"Route: {flight_details.origin.get("city")} ({flight_details.origin.get("airport_id")}) to "
+                          f"{flight_details.destination.get("city")} ({flight_details.destination.get("airport_id")}) \n"
+                          f"Scheduled Departure: {flight_details.scheduledDepart} \n"
+                          f"Scheduled Arrival: {flight_details.scheduledArrive} \n")
+                    if flight_details.actualDepart is not None:
+                        to_print += f"Actual Departure: {flight_details.actualDepart} \n"
+                    if flight_details.actualArrive is not None:
+                        to_print += f"Actual Arrival: {flight_details.actualArrive} \n"
+
+                    if len(flight_details.pilots) > 0:
+                        to_print += f"Pilots: \n"
+                        for pilot in flight_details.pilots:
+                            to_print += (f"Id: {pilot.get("id")}, {pilot.get("rank")} {pilot.get("first_name")} "
+                                         f"{pilot.get("last_name")} \n")
+                    else:
+                        to_print += "Pilots to be determined. \n"
+                    print(to_print)
                     break
                 else:
                     print(f"No flight found with id: {userinput}")
