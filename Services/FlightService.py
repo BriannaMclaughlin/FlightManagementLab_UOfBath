@@ -17,6 +17,14 @@ class FlightService():
             print("\n")
             return None
 
+    def get_flight_details(self, flight_id):
+        try:
+            return self.flightRepo.get_flight_details(flight_id=flight_id)
+        except ValueError as e:
+            print(e)
+            print("\n")
+            return None
+
     def addFlight(self,
                   status: str,
                   originAirport: str,
