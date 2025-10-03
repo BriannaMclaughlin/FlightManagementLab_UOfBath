@@ -48,3 +48,6 @@ class FlightService():
 
     def deleteFlight(self, id):
         self.flightRepo.delete(id)
+
+    def update_flight(self, id: int, **kwargs: object) -> None:
+        self.flightRepo.update(id, **kwargs)

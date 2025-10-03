@@ -109,7 +109,8 @@ class PilotRepository(Repository[Pilot]):
                 raise e
 
     def update(self, pilot_id: int, **kwargs: object) -> None:
-        allowed_fields = {"first_name", "last_name", "license_number", "rank", "experience_hours, home_airport, active"}
+        allowed_fields = {"first_name", "last_name", "license_number", "rank", "experience_hours", "home_airport", "active"}
+
         set_clauses = []
         values = []
 

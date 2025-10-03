@@ -81,7 +81,6 @@ def flight_menu(service: FlightService):
                     print("That was not a valid input. Flight ids are numeric only. \n")
                     continue
 
-                #TODO: this can be improved on, join the destinations and pilotAssignments in the query to add here.
                 if flight_details is not None:
                     to_print = (f"Flight: {flight_details.id} \n"
                           f"Status: {flight_details.status} \n"
@@ -109,7 +108,157 @@ def flight_menu(service: FlightService):
 
 
         elif userinput == "2":
-            pass
+            #TODO: status can only change to complete if actual depart and arrive are completed,
+            # then flight hours must be added to each pilot.
+            flight_id = None
+            status = None
+            scheduled_depart = None
+            scheduled_arrive = None
+            actual_depart = None
+            actual_arrive = None
+            pilots = []
+
+            while True:
+                #TODO: check that the id exists
+                user_input = input("Please enter the id for the flight you would like to update or 'find': ")
+
+                if user_input.strip().lower() == "back":
+                    return
+                elif user_input.strip().lower() == "find":
+                    pass
+                    #TODO: create find
+                elif user_input.strip().isnumeric():
+                    flight_id = int(user_input)
+                    break
+                else:
+                    print("That is not a valid input")
+                    continue
+
+            print("For each of the below items, input Y to update or N to skip: \n")
+
+            while True:
+                user_input=input("Flight Status: ")
+                if user_input.strip().lower() == "back":
+                    return
+                elif user_input.strip().lower() == "y":
+                    user_input = input("Please enter the new status: ")
+
+                    if user_input.strip().lower() == "back":
+                        return
+                    else:
+                        #TODO check is a valid status
+                        status = user_input.strip().title()
+                        break
+                elif user_input.strip().lower() == "n" or user_input.strip().lower() == "":
+                    break
+                else:
+                    print("That is not a valid input. Please enter either Y or N")
+                    continue
+
+            while True:
+                user_input=input("Scheduled Departure: ")
+                if user_input.strip().lower() == "back":
+                    return
+                elif user_input.strip().lower() == "y":
+                    scheduled_depart = ask_for_datetime("depart")
+                elif user_input.strip().lower() == "n" or user_input.strip().lower() == "":
+                    break
+                else:
+                    print("That is not a valid input. Please enter either Y or N")
+                    continue
+
+            while True:
+                user_input = input("Scheduled Arrival: ")
+                if user_input.strip().lower() == "back":
+                    return
+                elif user_input.strip().lower() == "y":
+                    scheduled_arrive = ask_for_datetime("arrive")
+                    break
+                elif user_input.strip().lower() == "n" or user_input.strip().lower() == "":
+                    break
+                else:
+                    print("That is not a valid input. Please enter either Y or N")
+                    continue
+
+            while True:
+                user_input = input("Actual Departure: ")
+                if user_input.strip().lower() == "back":
+                    return
+                elif user_input.strip().lower() == "y":
+                    actual_depart = ask_for_datetime("depart")
+                elif user_input.strip().lower() == "n" or user_input.strip().lower() == "":
+                    break
+                else:
+                    print("That is not a valid input. Please enter either Y or N")
+                    continue
+
+            while True:
+                user_input = input("Actual Arrival: ")
+                if user_input.strip().lower() == "back":
+                    return
+                elif user_input.strip().lower() == "y":
+                    actual_arrive = ask_for_datetime("arrive")
+                elif user_input.strip().lower() == "n" or user_input.strip().lower() == "":
+                    break
+                else:
+                    print("That is not a valid input. Please enter either Y or N")
+                    continue
+
+            while True:
+                user_input = input("Pilots Assigned: ")
+                if user_input.strip().lower() == "back":
+                    return
+                elif user_input.strip().lower() == "y":
+                    num_pilots_raw = input("How many pilots would you like to assign? ")
+                    if num_pilots_raw.strip().lower() == "back":
+                        return
+                    elif num_pilots_raw.strip().isnumeric():
+                        num_pilots = int(num_pilots_raw.strip())
+
+                        for num in range(num_pilots):
+                            while True:
+                                pilot_id_raw = input("Pilot Id: ")
+                                if pilot_id_raw.strip().lower() == "back":
+                                    return
+                                elif pilot_id_raw.strip().isnumeric():
+                                    pilot_id = int(pilot_id_raw.strip())
+                                    pilots.append(pilot_id)
+                                    break
+                                else:
+                                    print("That is not a valid input")
+                                    continue
+                    else:
+                        print("That is not a valid input.")
+                        continue
+
+                    break
+
+
+                elif user_input.strip().lower() == "n" or user_input.strip().lower() == "":
+                    break
+                else:
+                    print("That is not a valid input. Please enter either Y or N")
+                    continue
+
+            kwargs = {}
+
+            if status is not None:
+                kwargs["status"] = status
+            if scheduled_depart is not None:
+                kwargs["scheduledDepart"] = scheduled_depart
+            if scheduled_arrive is not None:
+                kwargs["scheduledArrive"] = scheduled_arrive
+            if actual_depart is not None:
+                kwargs["actualDepart"] = actual_depart
+            if actual_arrive is not None:
+                kwargs["actualArrive"] = actual_arrive
+
+            flightService.update_flight(flight_id, **kwargs)
+
+            for pilot in pilots:
+                flightAssignmentService.assign_pilot_to_flight(flight_id=flight_id, pilot_id=pilot)
+
+
         elif userinput == "3":
             continueInput = True
             origin = None
@@ -197,11 +346,12 @@ def pilotMenu(service: PilotService):
     print("Pilot Information \n")
     while True:
         user_input_raw = input("Would you like to: \n"
-                             "1. View a pilots information ️\n"
-                             "2. Update a pilots information \n" #TODO
-                             "3. Add a pilot 🧑🏽‍✈️\n"
-                             "4. Add a flight to a pilots schedule \n" #TODO
-                             "5. Delete a pilot \n"
+                               "1. View a pilots information ️\n"
+                               "2. Update a pilots information \n"
+                               "3. Add a pilot 🧑🏽‍✈️\n"
+                               "4. View pilot schedule \n" #TODO
+                               "5. Add a flight to a pilots schedule \n" #TODO
+                               "6. Delete a pilot \n"
                              "* input 'back' to return to main menu * \n")
 
         user_input = user_input_raw.strip().lower()
@@ -215,7 +365,7 @@ def pilotMenu(service: PilotService):
 
                 if user_input == "find":
                     #TODO: create a search by details
-                    pass
+                    continue
                 elif user_input.isnumeric():
                     pilot = pilotService.get_pilot(int(user_input))
                 else:
@@ -228,14 +378,195 @@ def pilotMenu(service: PilotService):
                           f"Name: {pilot.first_name} {pilot.last_name} \n"
                           f"License Number: {pilot.license_number} \n"
                           f"Flight Hours: {pilot.experience_hours} \n"
-                          f"Home Airport: {pilot.home_airport} \n")
+                          f"Home Airport: {destinationService.getDestination(pilot.home_airport).airportName}"
+                          f" ({pilot.home_airport})\n")
                     break
                 else:
                     print(f"No pilot found with id: {user_input}")
                     break
 
         elif user_input == "2":
-            pass
+            pilot_id = None
+            first_name = None
+            last_name = None
+            rank = None
+            license_number = None
+            flight_hours = None
+            home_airport = None
+            active = None
+
+            while True:
+                #TODO: check that the id exists
+                user_input = input("Please enter the id for the pilot you would like to update or 'find': ")
+
+                if user_input.strip().lower() == "back":
+                    return
+                elif user_input.strip().lower() == "find":
+                    pass
+                    #TODO: create find
+                elif user_input.strip().isnumeric():
+                    pilot_id = int(user_input)
+                    break
+                else:
+                    print("That is not a valid input")
+                    continue
+
+            print("For each of the below items, input Y to update or N to skip: \n")
+
+            while True:
+                user_input=input("First Name: ")
+                if user_input.strip().lower() == "back":
+                    return
+                elif user_input.strip().lower() == "y":
+                    user_input = input("Please enter the new first name: ")
+
+                    if user_input.strip().lower() == "back":
+                        return
+                    else:
+                        first_name = user_input.strip().title()
+                        break
+                elif user_input.strip().lower() == "n" or user_input.strip().lower() == "":
+                    break
+                else:
+                    print("That is not a valid input. Please enter either Y or N")
+                    continue
+
+            while True:
+                user_input=input("Last Name: ")
+                if user_input.strip().lower() == "back":
+                    return
+                elif user_input.strip().lower() == "y":
+                    user_input = input("Please enter the new last name: ")
+
+                    if user_input.strip().lower() == "back":
+                        return
+                    else:
+                        last_name = user_input.strip().title()
+                        break
+                elif user_input.strip().lower() == "n" or user_input.strip().lower() == "":
+                    break
+                else:
+                    print("That is not a valid input. Please enter either Y or N")
+                    continue
+
+            while True:
+                user_input=input("Rank: ")
+                if user_input.strip().lower() == "back":
+                    return
+                elif user_input.strip().lower() == "y":
+                    user_input = input("Please enter the new rank: ")
+
+                    if user_input.strip().lower() == "back":
+                        return
+                    else:
+                        #TODO check is a valid rank
+                        rank = user_input.strip().title()
+                        break
+                elif user_input.strip().lower() == "n" or user_input.strip().lower() == "":
+                    break
+                else:
+                    print("That is not a valid input. Please enter either Y or N")
+                    continue
+
+            while True:
+                user_input=input("Home Airport: ")
+                if user_input.strip().lower() == "back":
+                    return
+                elif user_input.strip().lower() == "y":
+                    user_input = input("Please enter the new home airport: ")
+
+                    if user_input.strip().lower() == "back":
+                        return
+                    else:
+                        #TODO check is a valid airport
+                        home_airport = user_input.strip().upper()
+                        break
+                elif user_input.strip().lower() == "n" or user_input.strip().lower() == "":
+                    break
+                else:
+                    print("That is not a valid input. Please enter either Y or N")
+                    continue
+
+            while True:
+                user_input=input("License Number: ")
+                if user_input.strip().lower() == "back":
+                    return
+                elif user_input.strip().lower() == "y":
+                    user_input = input("Please enter the new license number: ")
+
+                    if user_input.strip().lower() == "back":
+                        return
+                    else:
+                        license_number = user_input.strip().title()
+                        break
+                elif user_input.strip().lower() == "n" or user_input.strip().lower() == "":
+                    break
+                else:
+                    print("That is not a valid input. Please enter either Y or N")
+                    continue
+
+            while True:
+                user_input=input("Flight Hours: ")
+                if user_input.strip().lower() == "back":
+                    return
+                elif user_input.strip().lower() == "y":
+                    user_input = input("Please enter the new flight hours: ")
+
+                    if user_input.strip().lower() == "back":
+                        return
+                    elif user_input.strip().isnumeric():
+                        flight_hours = int(user_input.strip())
+                        break
+                    else:
+                        print("That is not a valid input.")
+                        continue
+                elif user_input.strip().lower() == "n" or user_input.strip().lower() == "":
+                    break
+                else:
+                    print("That is not a valid input. Please enter either Y or N")
+                    continue
+
+            while True:
+                user_input=input("Active: ")
+                if user_input.strip().lower() == "back":
+                    return
+                elif user_input.strip().lower() == "y":
+                    user_input = input("Please enter the 'Y' to mark pilot as active or 'N' to mark as inactive: ")
+
+                    if user_input.strip().lower() == "back":
+                        return
+                    elif user_input.strip().lower() == "y":
+                        active = True
+                        break
+                    elif user_input.strip().lower() == "n":
+                        active = False
+                        break
+                elif user_input.strip().lower() == "n" or user_input.strip().lower() == "":
+                    break
+                else:
+                    print("That is not a valid input. Please enter either Y or N")
+                    continue
+
+            kwargs = {}
+
+            if first_name is not None:
+                kwargs["first_name"] = first_name
+            if last_name is not None:
+                kwargs["last_name"] = last_name
+            if rank is not None:
+                kwargs["rank"] = rank
+            if home_airport is not None:
+                kwargs["home_airport"] = home_airport
+            if license_number is not None:
+                kwargs["license_number"] = license_number
+            if flight_hours is not None:
+                kwargs["flight_hours"] = flight_hours
+            if active is not None:
+                kwargs["active"] = active
+
+            pilotService.update_pilot(pilot_id=pilot_id, **kwargs)
+
+
         elif user_input == "3":
             first_name = None
             last_name = None
@@ -298,7 +629,48 @@ def pilotMenu(service: PilotService):
 
             print("Pilot has been successfully added ✅ \n")
 
+        elif user_input == "4":
+            #TODO
+            continue
         elif user_input == "5":
+            pilot_id = None
+            flight_id = None
+            while True:
+                user_input = input("Please enter the id for the pilot you would like to assign to a flight or 'find': ")
+
+                if user_input.strip().lower() == "back":
+                    return
+                elif user_input.strip().isnumeric():
+                    #TODO: check pilot is active
+                    pilot_id = int(user_input.strip())
+                    break
+                elif user_input.strip().lower() == "find":
+                    #TODO
+                    continue
+                else:
+                    print("That is not a valid input.")
+                    continue
+
+            while True:
+                user_input = input(f"Please enter the id for the flight you would like to assign to pilot {pilot_id}: ")
+
+                if user_input.strip().lower() == "back":
+                    return
+                elif user_input.strip().isnumeric():
+                    #TODO: add some checks that the pilot is available and in the right location
+                    flight_id = int(user_input.strip())
+                    break
+                elif user_input.strip().lower() == "find":
+                    #TODO
+                    continue
+                else:
+                    print("That is not a valid input.")
+                    continue
+
+            if pilot_id is not None and flight_id is not None:
+                flightAssignmentService.assign_pilot_to_flight(pilot_id=pilot_id, flight_id=flight_id)
+
+        elif user_input == "6":
             while True:
                 userinputraw = input("Please enter the pilot id to delete or 'find' to lookup the flight id. \n")
                 userinput = userinputraw.strip().lower()
