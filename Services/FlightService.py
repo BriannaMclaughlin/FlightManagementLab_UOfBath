@@ -51,3 +51,46 @@ class FlightService():
 
     def update_flight(self, id: int, **kwargs: object) -> None:
         self.flightRepo.update(id, **kwargs)
+
+    def find_by_origin(self, origin: str, start: datetime, end: datetime) -> str:
+        result = self.flightRepo.find_by_origin(origin, start, end)
+        string = ""
+        if result:
+            for flight in result:
+                string += (f"ID -> {flight.id}: {flight.originAirport} to {flight.destinationAirport} "
+                           f"({flight.status}) on {flight.scheduledDepart} \n")
+
+        if len(string) > 0:
+            return string
+        else:
+            string += f"No flights available during that time frame with an origin of {origin}"
+            return string
+
+    def find_by_destination(self, destination: str, start: datetime, end: datetime) -> str:
+        result = self.flightRepo.find_by_destination(destination, start, end)
+        string = ""
+        if result:
+            for flight in result:
+                string += (f"ID -> {flight.id}: {flight.originAirport} to {flight.destinationAirport} "
+                           f"({flight.status}) on {flight.scheduledDepart} \n")
+
+        if len(string) > 0:
+            return string
+        else:
+            string += f"No flights available during that time frame with a destination of {destination}"
+            return string
+
+    def find_by_origin_and_destination(self, origin: str, destination: str, start: datetime, end: datetime) -> str:
+        result = self.flightRepo.find_by_origin_and_destination(origin, destination, start, end)
+        string = ""
+        if result:
+            for flight in result:
+                string += (f"ID -> {flight.id}: {flight.originAirport} to {flight.destinationAirport} "
+                           f"({flight.status}) on {flight.scheduledDepart} \n")
+
+        if len(string) > 0:
+            return string
+        else:
+            string += (f"No flights available during that time frame with an origin of {origin} and a destination "
+                       f"of {destination}")
+            return string

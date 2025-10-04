@@ -1,4 +1,5 @@
 import contextlib
+import datetime
 import sqlite3
 from http import HTTPStatus
 
@@ -186,3 +187,73 @@ class FlightRepository(Repository[Flight]):
     def delete(self, id: int) -> None:
         with self.connect() as (db, cursor):
             cursor.execute("DELETE FROM flights WHERE id=?", (id,))
+
+    def find_by_origin(self, origin: str, start: datetime, end: datetime) -> list[Flight]:
+        with self.connect() as (db, cursor):
+            cursor.execute("""
+                SELECT * FROM flights
+                WHERE originAirportId = ?
+                AND scheduledDepart >= ?
+                AND scheduledDepart <= ?
+            """, (origin, start, end))
+            rows = cursor.fetchall()
+            return [
+                Flight(
+                    id=row["id"],
+                    status=row["status"],
+                    scheduledDepart=row["scheduledDepart"],
+                    scheduledArrive=row["scheduledArrive"],
+                    actualDepart=row["actualDepart"],
+                    actualArrive=row["actualArrive"],
+                    originAirport=row["originAirportId"],
+                    destinationAirport=row["destinationAirportId"]
+                )
+                for row in rows
+            ]
+
+    def find_by_destination(self, destination: str, start: datetime, end: datetime) -> list[Flight]:
+        with self.connect() as (db, cursor):
+            cursor.execute("""
+                SELECT * FROM flights
+                WHERE destinationAirportId = ?
+                AND scheduledDepart >= ?
+                AND scheduledDepart <= ?
+            """, (destination, start, end))
+            rows = cursor.fetchall()
+            return [
+                Flight(
+                    id=row["id"],
+                    status=row["status"],
+                    scheduledDepart=row["scheduledDepart"],
+                    scheduledArrive=row["scheduledArrive"],
+                    actualDepart=row["actualDepart"],
+                    actualArrive=row["actualArrive"],
+                    originAirport=row["originAirportId"],
+                    destinationAirport=row["destinationAirportId"]
+                )
+                for row in rows
+            ]
+
+    def find_by_origin_and_destination(self, origin: str, destination: str, start: datetime, end: datetime) -> list[Flight]:
+        with self.connect() as (db, cursor):
+            cursor.execute("""
+                SELECT * FROM flights
+                WHERE originAirportId = ?
+                AND destinationAirportId = ?
+                AND scheduledDepart >= ?
+                AND scheduledDepart <= ?
+            """, (origin, destination, start, end))
+            rows = cursor.fetchall()
+            return [
+                Flight(
+                    id=row["id"],
+                    status=row["status"],
+                    scheduledDepart=row["scheduledDepart"],
+                    scheduledArrive=row["scheduledArrive"],
+                    actualDepart=row["actualDepart"],
+                    actualArrive=row["actualArrive"],
+                    originAirport=row["originAirportId"],
+                    destinationAirport=row["destinationAirportId"]
+                )
+                for row in rows
+            ]

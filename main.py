@@ -1,4 +1,5 @@
 from datetime import datetime
+from os import WCONTINUED
 
 from FlightManagementLab_UOfBath.Entities.Destination import Destination
 from FlightManagementLab_UOfBath.Repositories.DestinationRepository import DestinationRepository
@@ -51,6 +52,103 @@ def ask_for_datetime(label: str) -> datetime | None:
 
         return datetime(year, month, day, hour, minute)
 
+def find_helper(label: str) -> None | str:
+    #TODO: confirm this works for multiple airports in a city, and clean up how the result is shown
+    if label == "destination":
+        city_raw = input("Please enter a city to search for airports in: ")
+
+        if city_raw.strip().lower() == "back":
+            return None
+        else:
+            return  destinationService.find_by_city(city_raw.strip().title())
+    elif label == "pilot":
+        last_name_raw = input("Please enter the last name for the pilot you wish to find: ")
+
+        if last_name_raw.strip().lower() == "back":
+            return None
+        else:
+            return pilotService.find_by_last_name(last_name_raw.strip().title())
+    elif label == "flight":
+        while True:
+            user_input = input("Would you like to search by: \n"
+                               "1. Origin Airport Id \n"
+                               "2. Destination Airport Id \n"
+                               "3. Origin and Destination Airport Id \n")
+
+            if user_input.strip().lower() == "back":
+                return None
+            elif user_input.strip() == "1":
+                while True:
+                    origin = input("Please enter the id for the origin airport: ")
+
+                    if origin.strip().lower() == "back":
+                        break
+                    elif destinationService.destinationExists(origin.strip().upper()):
+                        print("Please enter a date range for the search.")
+                        print("Start Date: ")
+                        start = ask_for_datetime("start")
+                        print("End Date: ")
+                        end = ask_for_datetime("end")
+                        return flightService.find_by_origin(origin.strip().upper(), start, end)
+                    else:
+                        print(f"There is no airport in our system with id {origin.strip().upper()}. \n"
+                              f"Please try again, or go back and add a new destination to the system. \n")
+
+            elif user_input.strip() == "2":
+                while True:
+                    destination = input("Please enter the id for the destination airport: ")
+
+                    if destination.strip().lower() == "back":
+                        break
+                    elif destinationService.destinationExists(destination.strip().upper()):
+                        print("Please enter a date range for the search.")
+                        print("Start Date: ")
+                        start = ask_for_datetime("start")
+                        print("End Date: ")
+                        end = ask_for_datetime("end")
+                        return flightService.find_by_destination(destination.strip().upper(), start, end)
+                    else:
+                        print(f"There is no airport in our system with id {destination.strip().upper()}. \n"
+                              f"Please try again, or go back and add a new destination to the system. \n")
+
+            elif user_input.strip() == "3":
+                while True:
+                    while True:
+                        origin = input("Please enter the id for the origin airport: ")
+
+                        if origin.strip().lower() == "back":
+                            break
+                        if destinationService.destinationExists(origin.strip().upper()) is False:
+                            print(f"There is no airport in our system with id {origin.strip().upper()}. \n"
+                                  f"Please try again, or go back and add a new destination to the system. \n")
+                            continue
+
+                    while True:
+                        destination = input("Please enter the id for the destination airport: ")
+
+                        if destination.strip().lower() == "back":
+                            break
+
+                        if destinationService.destinationExists(origin.strip().upper()) is False:
+                            print(f"There is no airport in our system with id {origin.strip().upper()}. \n"
+                                  f"Please try again, or go back and add a new destination to the system. \n")
+                            continue
+
+                    print("Please enter a date range for the search.")
+                    print("Start Date: ")
+                    start = ask_for_datetime("start")
+                    print("End Date: ")
+                    end = ask_for_datetime("end")
+                    return flightService.find_by_destination(destination.strip().upper(), start, end)
+
+            else:
+                print("That is not a valid input. Please input 1, 2 or 3.")
+                continue
+
+
+    return None
+
+
 def flight_menu(service: FlightService):
     print("Flight Information \n")
     while True:
@@ -73,8 +171,8 @@ def flight_menu(service: FlightService):
                 userinput = userinputraw.strip().lower()
 
                 if userinput == "find":
-                    #TODO: create a search by details
-                    pass
+                    print(find_helper("flight"))
+                    continue
                 elif userinput.isnumeric():
                     flight_details = flightService.get_flight_details(int(userinput))
                 else:
@@ -125,8 +223,8 @@ def flight_menu(service: FlightService):
                 if user_input.strip().lower() == "back":
                     return
                 elif user_input.strip().lower() == "find":
-                    pass
-                    #TODO: create find
+                    print(find_helper("flight"))
+                    continue
                 elif user_input.strip().isnumeric():
                     flight_id = int(user_input)
                     break
@@ -217,13 +315,16 @@ def flight_menu(service: FlightService):
 
                         for num in range(num_pilots):
                             while True:
-                                pilot_id_raw = input("Pilot Id: ")
+                                print("You can input 'find' to search for pilot ids.")
+                                pilot_id_raw = input(f"{num+1}. Pilot Id: ")
                                 if pilot_id_raw.strip().lower() == "back":
                                     return
                                 elif pilot_id_raw.strip().isnumeric():
                                     pilot_id = int(pilot_id_raw.strip())
                                     pilots.append(pilot_id)
                                     break
+                                elif pilot_id_raw.strip().lower() == "find":
+                                    print(find_helper("pilot"))
                                 else:
                                     print("That is not a valid input")
                                     continue
@@ -274,6 +375,9 @@ def flight_menu(service: FlightService):
 
                 if userinputraw.strip().lower() == "back":
                     continueInput = False
+                elif userinputraw.strip().lower() == "find":
+                    print(find_helper("destination"))
+                    continue
 
                 userinput = userinputraw.strip().upper()
 
@@ -288,6 +392,9 @@ def flight_menu(service: FlightService):
 
                 if userinputraw.strip().lower() == "back":
                     continueInput = False
+                elif userinputraw.strip().lower() == "find":
+                    print(find_helper("destination"))
+                    continue
 
                 userinput = userinputraw.strip().upper()
 
@@ -329,8 +436,8 @@ def flight_menu(service: FlightService):
                 userinput = userinputraw.strip().lower()
 
                 if userinput == "find":
-                    # TODO: create a search by details
-                    pass
+                    print(find_helper("flight"))
+                    continue
 
                 if userinput == "back":
                     break
@@ -364,7 +471,7 @@ def pilotMenu(service: PilotService):
                 user_input = user_input_raw.strip().lower()
 
                 if user_input == "find":
-                    #TODO: create a search by details
+                    print(find_helper("pilot"))
                     continue
                 elif user_input.isnumeric():
                     pilot = pilotService.get_pilot(int(user_input))
@@ -402,8 +509,8 @@ def pilotMenu(service: PilotService):
                 if user_input.strip().lower() == "back":
                     return
                 elif user_input.strip().lower() == "find":
-                    pass
-                    #TODO: create find
+                    print(find_helper("pilot"))
+                    continue
                 elif user_input.strip().isnumeric():
                     pilot_id = int(user_input)
                     break
@@ -478,9 +585,13 @@ def pilotMenu(service: PilotService):
                     if user_input.strip().lower() == "back":
                         return
                     else:
-                        #TODO check is a valid airport
-                        home_airport = user_input.strip().upper()
-                        break
+                        if destinationService.destinationExists(user_input.strip().upper()):
+                            home_airport = user_input.strip().upper()
+                            break
+                        else:
+                            print("That airport does not exist in our system. \n"
+                                  "Please try again, or go 'back' and add that airport as a destination first. \n")
+                            continue
                 elif user_input.strip().lower() == "n" or user_input.strip().lower() == "":
                     break
                 else:
@@ -645,7 +756,7 @@ def pilotMenu(service: PilotService):
                     pilot_id = int(user_input.strip())
                     break
                 elif user_input.strip().lower() == "find":
-                    #TODO
+                    print(find_helper("pilot"))
                     continue
                 else:
                     print("That is not a valid input.")
@@ -661,7 +772,7 @@ def pilotMenu(service: PilotService):
                     flight_id = int(user_input.strip())
                     break
                 elif user_input.strip().lower() == "find":
-                    #TODO
+                    print(find_helper("flight"))
                     continue
                 else:
                     print("That is not a valid input.")
@@ -676,8 +787,8 @@ def pilotMenu(service: PilotService):
                 userinput = userinputraw.strip().lower()
 
                 if userinput == "find":
-                    # TODO: create a search by details
-                    pass
+                    print(find_helper("pilot"))
+                    continue
 
                 if userinput == "back":
                     break
@@ -725,8 +836,12 @@ def destinationMenu(service: DestinationService):
                           "* input 'back' to return to main menu * \n")
 
         if userinput.strip().lower() == "1":
-            airportId = input("Please enter the airport code for the destination you would like to view. \n")
+            airportId = input("Please enter the airport code for the destination you would like to view or 'find'. \n")
             if airportId.strip().lower() == "back":
+                continue
+
+            if airportId.strip().lower() == "find":
+                print(find_helper("destination"))
                 continue
 
             airportId = airportId.strip().upper()
@@ -802,18 +917,19 @@ def destinationMenu(service: DestinationService):
                 city = city.strip().lower()
 
             try:
-                destinationRepo.add(
+                destinationService.add(
                     airportId=airportId,
                     airportName=airportName.title(),
                     continent=continent.title(),
                     country=country.title(),
                     city=city.title()
                 )
-            except:
-                print("There was an error in creating that destination.")
+            except Exception as e:
+                print(f"There was an error in creating that destination: {e}")
 
 
         elif userinput.strip().lower() == "4":
+            #TODO
             pass
 
         elif userinput.strip().lower() == "back":
