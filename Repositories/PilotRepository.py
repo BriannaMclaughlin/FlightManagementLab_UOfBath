@@ -133,3 +133,21 @@ class PilotRepository(Repository[Pilot]):
     def delete(self, pilot_id: int) -> None:
         with self.connect() as (db, cursor):
             cursor.execute("DELETE FROM pilots WHERE id=?", (pilot_id,))
+
+    def find_by_last_name(self, last_name: str) -> list[Pilot]:
+        with self.connect() as (db, cursor):
+            cursor.execute("SELECT * FROM pilots WHERE last_name=?", (last_name,))
+            rows = cursor.fetchall()
+            return [
+                Pilot(
+                    id=row["id"],
+                    first_name=row["first_name"],
+                    last_name=row["last_name"],
+                    license_number=row["license_number"],
+                    rank=row["rank"],
+                    experience_hours=row["experience_hours"],
+                    home_airport=row["home_airport"],
+                    active=bool(row["active"])
+                )
+                for row in rows
+            ]

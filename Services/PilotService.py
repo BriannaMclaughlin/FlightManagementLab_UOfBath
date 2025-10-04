@@ -38,3 +38,21 @@ class PilotService:
 
     def update_pilot(self, pilot_id, **kwargs):
         self.pilot_repo.update(pilot_id=pilot_id, **kwargs)
+
+    def find_by_last_name(self, last_name: str) -> str:
+        result =  self.pilot_repo.find_by_last_name(last_name)
+        string = ""
+        if result:
+            for pilot in result:
+                active = ""
+                if pilot.active:
+                    active = "Active"
+                else:
+                    active = "Inactive"
+                string += (f"ID -> {pilot.id}: {pilot.rank} {pilot.first_name} {pilot.last_name} ({active}), "
+                           f"Home Airport: {pilot.home_airport} \n")
+
+        if len(string) > 0:
+            return string
+        else:
+            string += f"No pilots available with a last name of {last_name}"

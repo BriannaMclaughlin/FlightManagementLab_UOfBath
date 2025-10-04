@@ -53,6 +53,15 @@ class DestinationRepository(Repository[Destination]):
             cursor.execute("SELECT * FROM destinations")
             return [Destination(*row) for row in cursor.fetchall()]
 
+    def find_by_city(self, city: str) -> list[Destination]:
+        with self.connect() as (db, cursor):
+            cursor.execute("SELECT * FROM destinations WHERE city=?", (city,))
+            return [Destination(*row) for row in cursor.fetchall()]
+
+    def find_by_country(self, country: str) -> list[Destination]:
+        with self.connect() as (db, cursor):
+            cursor.execute("SELECT * FROM destinations WHERE country=?", (country,))
+
     def add(self, destination: Destination | None = None, **kwargs: object) -> None:
         if destination:
             airportId, airportName, continent, country, city = (
@@ -79,6 +88,7 @@ class DestinationRepository(Repository[Destination]):
                 )
             except Exception as e:
                 db.rollback()
+                print(f"insert failed: {e}")
                 raise e
 
     def update(self, airportId: str, **kwargs: object) -> None:
