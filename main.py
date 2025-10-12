@@ -17,10 +17,6 @@ flightAssignmentService = FlightAssignmentService()
 
 #TODO: change all variables and methods to snake case because python. Only classes should be camel case
 
-def start_repositories():
-    global destinationRepo
-    destinationRepo = DestinationRepository("FlightManagementDB.db")
-
 def ask_for_datetime(label: str) -> datetime | None:
     while True:
         year = input(f"Enter {label} year: ")
@@ -170,11 +166,16 @@ def flight_menu(service: FlightService):
                 userinputraw = input("Please enter the flight id or 'find' to lookup the flight id. \n")
                 userinput = userinputraw.strip().lower()
 
-                if userinput == "find":
+                if userinput == "back":
+                    break
+                elif userinput == "find":
                     print(find_helper("flight"))
                     continue
                 elif userinput.isnumeric():
-                    flight_details = flightService.get_flight_details(int(userinput))
+                    if flightService.flightExists(int(userinput)):
+                        flight_details = flightService.get_flight_details(int(userinput))
+                    else:
+                        print("That flight id does not exist.")
                 else:
                     print("That was not a valid input. Flight ids are numeric only. \n")
                     continue
@@ -217,7 +218,6 @@ def flight_menu(service: FlightService):
             pilots = []
 
             while True:
-                #TODO: check that the id exists
                 user_input = input("Please enter the id for the flight you would like to update or 'find': ")
 
                 if user_input.strip().lower() == "back":
@@ -226,8 +226,12 @@ def flight_menu(service: FlightService):
                     print(find_helper("flight"))
                     continue
                 elif user_input.strip().isnumeric():
-                    flight_id = int(user_input)
-                    break
+                    if flightService.flightExists(int(user_input.strip())):
+                        flight_id = int(user_input)
+                        break
+                    else:
+                        print("That flight id does not exist.")
+                        continue
                 else:
                     print("That is not a valid input")
                     continue
@@ -442,10 +446,17 @@ def flight_menu(service: FlightService):
                 if userinput == "back":
                     break
 
-                #TODO: add an are you sure option that shows what is being deleted.
                 if userinput.isnumeric():
-                    flightService.deleteFlight(int(userinput))
-                    print(f"Flight with id {userinput} has been deleted.")
+                    if flightService.flightExists(int(userinput)):
+                        print(flightService.get_flight_details(int(userinput)))
+                        is_sure = input("Are you sure you wish to delete the above flight? Y/N")
+                        if is_sure.strip().lower() == "y":
+                            flightService.deleteFlight(int(userinput))
+                            print(f"Flight with id {userinput} has been deleted.")
+                        else:
+                            return
+                    else:
+                        print(f"There is no flight with id {userinput}")
                 else:
                     print("That is not a valid flight id.")
 
@@ -503,7 +514,6 @@ def pilotMenu(service: PilotService):
             active = None
 
             while True:
-                #TODO: check that the id exists
                 user_input = input("Please enter the id for the pilot you would like to update or 'find': ")
 
                 if user_input.strip().lower() == "back":
@@ -512,8 +522,11 @@ def pilotMenu(service: PilotService):
                     print(find_helper("pilot"))
                     continue
                 elif user_input.strip().isnumeric():
-                    pilot_id = int(user_input)
-                    break
+                    if pilotService.pilotExists(int(user_input.strip())):
+                        pilot_id = int(user_input)
+                        break
+                    else:
+                        print("That pilot id does not exist.")
                 else:
                     print("That is not a valid input")
                     continue
@@ -793,23 +806,31 @@ def pilotMenu(service: PilotService):
                 if userinput == "back":
                     break
 
-                # TODO: add an are you sure option that shows what is being deleted.
                 if userinput.isnumeric():
-                    while True:
-                        retire_raw = input("Would you like retire this pilot from active service instead of deleting their "
-                                           "data? Y/N")
-                        if retire_raw.strip().lower() == "back":
-                            return
-                        elif retire_raw.strip().lower() == "y":
-                            pilotService.update_pilot(int(userinput), active=False)
-                            break
-                        elif retire_raw.strip().lower() == "n":
-                            pilotService.delete_pilot(int(userinput))
-                            print(f"Flight with id {userinput} has been deleted.")
-                            break
-                        else:
-                            print("That is not a valid input. Please input y or n")
-                            continue
+                    if pilotService.pilotExists(int(userinput)):
+                        while True:
+                            retire_raw = input("Would you like retire this pilot from active service instead of deleting their "
+                                               "data? Y/N")
+                            if retire_raw.strip().lower() == "back":
+                                return
+                            elif retire_raw.strip().lower() == "y":
+                                pilotService.update_pilot(int(userinput), active=False)
+                                break
+                            elif retire_raw.strip().lower() == "n":
+                                pilot = pilotService.get_pilot(int(userinput))
+                                print(f"id: {pilot.id} -> {pilot.rank} {pilot.first_name} {pilot.last_name}")
+                                is_sure = input("Are you sure you with to delete the above pilot? Y/N")
+                                if is_sure.strip().lower() == "y":
+                                    pilotService.delete_pilot(int(userinput))
+                                    print(f"Flight with id {userinput} has been deleted.")
+                                    break
+                                else:
+                                    print(f"Pilot with id {pilot.id} has NOT been deleted.")
+                            else:
+                                print("That is not a valid input. Please input y or n")
+                                continue
+                    else:
+                        print(f"There is no pilot with an id of {userinput}")
 
 
 
@@ -849,7 +870,7 @@ def destinationMenu(service: DestinationService):
 
             if destination:
                 print(f"Airport: {destination.airportName} ({destination.airportId}) "
-                      f"in {destination.city}, {destination.country}, {destination.continent}.")
+                      f"in {destination.city}, {destination.country}.")
             else:
                 print(f"No destination found with airport code {airportId}\n")
 
@@ -872,37 +893,6 @@ def destinationMenu(service: DestinationService):
             else:
                 airportName = airportName.strip().lower()
 
-            while True:
-                continent = input("In what continent is this airport? \n"
-                                     "North America \n"
-                                     "South America \n"
-                                     "Europe \n"
-                                     "Africa \n"
-                                     "Asia \n"
-                                     "Oceania \n"
-                                     "Antarctica \n")
-
-                if continent.strip().lower() == "back":
-                    break
-                elif (continent.strip().lower() != "north america"
-                      and continent.strip().lower() != "south america"
-                      and continent.strip().lower() != "europe"
-                      and continent.strip().lower() != "africa"
-                      and continent.strip().lower() != "asia"
-                      and continent.strip().lower() != "oceania"
-                      and continent.strip().lower() != "antarctica"):
-                    print("That is not a valid continent. Please see the below valid continents: \n"
-                          "North America \n"
-                          "South America \n"
-                          "Europe \n"
-                          "Africa \n"
-                          "Asia \n"
-                          "Oceania \n"
-                          "Antarctica \n")
-                    continue
-                else:
-                    continent = continent.strip().lower()
-                    break
 
             country = input("Please enter the country. \n")
             if country.strip().lower() == "back":
@@ -920,7 +910,6 @@ def destinationMenu(service: DestinationService):
                 destinationService.add(
                     airportId=airportId,
                     airportName=airportName.title(),
-                    continent=continent.title(),
                     country=country.title(),
                     city=city.title()
                 )

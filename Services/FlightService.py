@@ -94,3 +94,11 @@ class FlightService():
             string += (f"No flights available during that time frame with an origin of {origin} and a destination "
                        f"of {destination}")
             return string
+
+    def flightExists(self, flight_id: int):
+        try:
+            flight = self.flightRepo.get(flight_id)
+            if flight:
+                return True
+        except ValueError as e:
+            return False

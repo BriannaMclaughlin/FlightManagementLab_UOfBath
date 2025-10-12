@@ -13,6 +13,7 @@ class FlightRepository(Repository[Flight]):
     def __init__(self, db_path: str) -> None:
         self.db_path = db_path
         self.create_table()
+        self.insert_dummy_data()
 
     @contextlib.contextmanager
     def connect(self):
@@ -48,8 +49,39 @@ class FlightRepository(Repository[Flight]):
                     destinationAirportId VARCHAR NOT NULL,
                     FOREIGN KEY (originAirportId) REFERENCES destinations(airportId),
                     FOREIGN KEY (destinationAirportId) REFERENCES destinations(airportId)
+                    UNIQUE(originAirportId, destinationAirportId, scheduledDepart)
                 )
             """)
+
+    def insert_dummy_data(self) -> None:
+        now = datetime.datetime.now()
+
+        dummy_flights = [
+            # status, scheduledDepart, scheduledArrive, actualDepart, actualArrive, origin, destination
+            ("Scheduled", datetime.datetime(2025, 10, 15, 10, 0), datetime.datetime(2025, 10, 15, 17, 0), None, None,
+             "JFK", "LHR"),
+            ("Scheduled", datetime.datetime(2025, 10, 17, 8, 0), datetime.datetime(2025, 10, 17, 16, 0), None, None,
+             "LAX", "CDG"),
+            ("In Flight", datetime.datetime(2025, 10, 12, 5, 0), datetime.datetime(2025, 10, 12, 13, 0),
+             datetime.datetime(2025, 10, 12, 5, 0), None, "DXB", "SIN"),
+            ("Completed", datetime.datetime(2025, 10, 11, 3, 0), datetime.datetime(2025, 10, 11, 10, 0),
+             datetime.datetime(2025, 10, 11, 3, 0), datetime.datetime(2025, 10, 11, 10, 0), "LHR", "JFK"),
+            ("Scheduled", datetime.datetime(2025, 11, 25, 21, 30), datetime.datetime(2025, 11, 26, 5, 15), None, None,
+             "STN", "LHR"),
+            (
+            "Scheduled", datetime.datetime(2025, 12, 5, 9, 0), datetime.datetime(2025, 12, 5, 12, 0), None, None, "LHR",
+            "CDG"),
+            ("Scheduled", datetime.datetime(2025, 12, 10, 22, 45), datetime.datetime(2025, 12, 11, 6, 30), None, None,
+             "CDG", "DXB"),
+        ]
+
+        with self.connect() as (db, cursor):
+            cursor.executemany("""
+                INSERT OR IGNORE INTO flights
+                (status, scheduledDepart, scheduledArrive, actualDepart, actualArrive, originAirportId, destinationAirportId)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, dummy_flights)
+            print(f"✅ Inserted {cursor.rowcount} new flights (existing ones ignored).")
 
     def get(self, id: int) -> Flight:
         with self.connect() as (db, cursor):
