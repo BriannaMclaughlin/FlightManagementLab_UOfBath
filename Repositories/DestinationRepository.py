@@ -10,6 +10,7 @@ class DestinationRepository(Repository[Destination]):
     def __init__(self, db_path: str) -> None:
         self.db_path = db_path
         self.create_table()
+        self.insert_dummy_data()
 
     @contextlib.contextmanager
     def connect(self):
@@ -34,11 +35,32 @@ class DestinationRepository(Repository[Destination]):
                 CREATE TABLE IF NOT EXISTS destinations (
                     airportId VARCHAR PRIMARY KEY,
                     airportName VARCHAR,
-                    continent TEXT,
                     country TEXT,
                     city TEXT
                 )
             """)
+
+    def insert_dummy_data(self) -> None:
+        dummy_data = [
+            ("LHR", "London Heathrow", "United Kingdom", "London"),
+            ("LGW", "London Gatwick", "United Kingdom", "London"),
+            ("STN", "London Stansted", "United Kingdom", "London"),
+            ("CDG", "Charles de Gaulle", "France", "Paris"),
+            ("JFK", "John F. Kennedy International", "United States", "New York"),
+            ("LAX", "Los Angeles International", "United States", "Los Angeles"),
+            ("DXB", "Dubai International", "United Arab Emirates", "Dubai"),
+            ("HND", "Tokyo Haneda", "Japan", "Tokyo"),
+            ("SIN", "Singapore Changi", "Singapore", "Singapore"),
+            ("SYD", "Sydney Kingsford Smith", "Australia", "Sydney"),
+        ]
+
+        with self.connect() as (db, cursor):
+            cursor.executemany("""
+                INSERT OR IGNORE INTO destinations 
+                (airportId, airportName, country, city)
+                VALUES (?, ?, ?, ?)
+            """, dummy_data)
+            print(f"✅ Inserted {cursor.rowcount} new destinations (existing ones ignored).")
 
     def get(self, airportId: str) -> Destination:
         with self.connect() as (db, cursor):
@@ -64,27 +86,25 @@ class DestinationRepository(Repository[Destination]):
 
     def add(self, destination: Destination | None = None, **kwargs: object) -> None:
         if destination:
-            airportId, airportName, continent, country, city = (
+            airportId, airportName, country, city = (
                 destination.airportId,
                 destination.airportName,
-                destination.continent,
                 destination.country,
                 destination.city,
             )
-        elif {"airportId", "airportName", "continent", "country", "city"} <= kwargs.keys():
+        elif {"airportId", "airportName", "country", "city"} <= kwargs.keys():
             airportId = kwargs["airportId"]
             airportName = kwargs["airportName"]
-            continent = kwargs["continent"]
             country = kwargs["country"]
             city = kwargs["city"]
         else:
-            raise ValueError("Must provide a Destination object or airportId, airportName, continent, country, city as kwargs")
+            raise ValueError("Must provide a Destination object or airportId, airportName, country, city as kwargs")
 
         with self.connect() as (db, cursor):
             try:
                 cursor.execute(
-                    "INSERT INTO destinations (airportId, airportName, continent, country, city) VALUES (?, ?, ?, ?, ?)",
-                    (airportId, airportName, continent, country, city),
+                    "INSERT INTO destinations (airportId, airportName, country, city) VALUES (?, ?, ?, ?, ?)",
+                    (airportId, airportName, country, city),
                 )
             except Exception as e:
                 db.rollback()
@@ -92,7 +112,7 @@ class DestinationRepository(Repository[Destination]):
                 raise e
 
     def update(self, airportId: str, **kwargs: object) -> None:
-        allowed_fields = {"airportName", "continent", "country", "city"}
+        allowed_fields = {"airportName", "country", "city"}
         set_clauses = []
         values = []
 

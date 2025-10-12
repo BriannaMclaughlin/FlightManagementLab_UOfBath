@@ -10,6 +10,7 @@ class PilotRepository(Repository[Pilot]):
     def __init__(self, db_path: str) -> None:
         self.db_path = db_path
         self.create_table()
+        self.insert_dummy_data()
 
     @contextlib.contextmanager
     def connect(self):
@@ -34,13 +35,35 @@ class PilotRepository(Repository[Pilot]):
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     first_name TEXT NOT NULL,
                     last_name TEXT NOT NULL,
-                    license_number VARCHAR NOT NULL,
+                    license_number VARCHAR NOT NULL UNIQUE,
                     rank TEXT NOT NULL,
                     experience_hours INTEGER NOT NULL,
                     home_airport TEXT NOT NULL,
                     active INTEGER NOT NULL CHECK (active IN (0, 1))
                 )
             """)
+
+    def insert_dummy_data(self) -> None:
+        dummy_pilots = [
+            ("John", "Sanderson", "LIC001", "Captain", 12000, "LHR", 1),
+            ("Emma", "Foster", "LIC002", "First Officer", 4500, "JFK", 1),
+            ("Liam", "Nguyen", "LIC003", "Captain", 9800, "DXB", 1),
+            ("Sophia", "Chen", "LIC004", "First Officer", 3200, "SIN", 0),
+            ("Michael", "Brown", "LIC005", "Captain", 15000, "CDG", 1),
+            ("Olivia", "Garcia", "LIC006", "First Officer", 6000, "LAX", 1),
+            ("Noah", "Kumar", "LIC007", "Captain", 11000, "STN", 1),
+            ("Ava", "Petrov", "LIC008", "First Officer", 2500, "ORD", 0),
+            ("Ethan", "Hughes", "LIC009", "Captain", 13000, "LHR", 1),
+            ("Isabella", "Miller", "LIC010", "First Officer", 7000, "JFK", 1)
+        ]
+
+        with self.connect() as (db, cursor):
+            cursor.executemany("""
+                INSERT OR IGNORE INTO pilots
+                (first_name, last_name, license_number, rank, experience_hours, home_airport, active)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, dummy_pilots)
+            print(f"✅ Inserted {cursor.rowcount} new pilots (existing ones ignored).")
 
     def get(self, id: int) -> Pilot:
         with self.connect() as (db, cursor):

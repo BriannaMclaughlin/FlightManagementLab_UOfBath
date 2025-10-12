@@ -9,6 +9,7 @@ class FlightAssignmentRepository():
     def __init__(self, db_path: str) -> None:
         self.db_path = db_path
         self.create_table()
+        self.insert_dummy_data()
 
     @contextlib.contextmanager
     def connect(self):
@@ -37,6 +38,23 @@ class FlightAssignmentRepository():
                     FOREIGN KEY (pilot_id) REFERENCES pilots(id)
                 )
             """)
+
+    def insert_dummy_data(self) -> None:
+        dummy_data = [
+            #flight id, pilot id
+            ("4", "1"),
+            ("4", "2"),
+            ("3", "3"),
+            ("3", "4")
+        ]
+        with self.connect() as (db, cursor):
+            cursor.executemany("""
+                            INSERT OR IGNORE INTO flight_assignment
+                            (flight_id, pilot_id)
+                            VALUES (?, ?)
+                        """, dummy_data)
+            print(f"✅ Inserted {cursor.rowcount} new flight assignments (existing ones ignored).")
+
 
     def get_pilots_for_flight(self, flight_id: int) -> list[int]:
         with self.connect() as (db, cursor):
