@@ -471,7 +471,7 @@ def pilotMenu(service: PilotService):
                                "1. View a pilots information ️\n"
                                "2. Update a pilots information \n"
                                "3. Add a pilot 🧑🏽‍✈️\n"
-                               "4. View pilot schedule \n" #TODO
+                               "4. View pilot schedule \n" 
                                "5. Add a flight to a pilots schedule \n"
                                "6. Delete a pilot \n"
                              "* input 'back' to return to main menu * \n")
@@ -759,7 +759,37 @@ def pilotMenu(service: PilotService):
             print("Pilot has been successfully added ✅ \n")
 
         elif user_input == "4":
-            #TODO
+            while True:
+                user_input = input("Please enter the id for the pilot who's schedule you wish to view: ")
+
+                if user_input.strip().lower() == "back":
+                    return
+                elif user_input.strip().lower() == "find":
+                    print(find_helper("pilot"))
+                    continue
+                elif user_input.strip().isnumeric():
+                    if service.pilotExists(int(user_input.strip())):
+                        pilot_id = int(user_input.strip())
+                        #TODO: change this to now, after adding more flight assignments
+                        start_date = datetime(2025, 10, 1)
+                        flights = flightAssignmentService.get_schedule_for_pilot(pilot_id=pilot_id, start_date=start_date)
+                        if len(flights) > 0:
+                            for flight in flights:
+                                print(f"ID {flight.id}: {flight.status} {flight.originAirport} -> "
+                                      f"{flight.destinationAirport} scheduled to depart at {flight.scheduledDepart}"
+                                      f" and arrive at {flight.scheduledArrive}")
+                            print("\n")
+                            break
+                        else:
+                            print(f"There are currently no flights scheduled for the pilot with id {user_input.strip()}")
+                            break
+                    else:
+                        print(f"There is no pilot with an id of {user_input.strip()}. Please try again.")
+                        continue
+                else:
+                    print("That is not a valid pilot id.")
+                    continue
+
             continue
         elif user_input == "5":
             pilot_id = None
@@ -894,8 +924,95 @@ def destinationMenu(service: DestinationService):
                 print(f"No destination found with airport code {airportId}\n")
 
         elif userinput.strip().lower() == "2":
-            # TODO: add update call
-            pass
+            airport_id = None
+            airport_name = None
+            country = None
+            city = None
+
+            while airport_id is None:
+                user_input = input("Please enter the id for the airport you would like to update or 'find': ")
+
+                if user_input.strip().lower() == "back":
+                    return
+                elif user_input.strip().lower() == "find":
+                    print(find_helper("destination"))
+                    continue
+                else:
+                    if service.destinationExists(user_input.strip().upper()):
+                        airport_id = user_input.strip().upper()
+                    else:
+                        print("That airport id does not exist.")
+
+
+            print("For each of the below items, input Y to update or N to skip: \n")
+
+            while True:
+                user_input = input("Airport Name: ")
+                if user_input.strip().lower() == "back":
+                    return
+                elif user_input.strip().lower() == "y":
+                    user_input = input("Please enter the new airport name: ")
+
+                    if user_input.strip().lower() == "back":
+                        return
+                    else:
+                        airport_name = user_input.strip().title()
+                        break
+                elif user_input.strip().lower() == "n" or user_input.strip().lower() == "":
+                    break
+                else:
+                    print("That is not a valid input. Please enter either Y or N")
+                    continue
+
+            while True:
+                user_input = input("Country: ")
+                if user_input.strip().lower() == "back":
+                    return
+                elif user_input.strip().lower() == "y":
+                    user_input = input("Please enter the new country name: ")
+
+                    if user_input.strip().lower() == "back":
+                        return
+                    else:
+                        country = user_input.strip().title()
+                        break
+                elif user_input.strip().lower() == "n" or user_input.strip().lower() == "":
+                    break
+                else:
+                    print("That is not a valid input. Please enter either Y or N")
+                    continue
+
+            while True:
+                user_input = input("City: ")
+                if user_input.strip().lower() == "back":
+                    return
+                elif user_input.strip().lower() == "y":
+                    user_input = input("Please enter the new city name: ")
+
+                    if user_input.strip().lower() == "back":
+                        return
+                    else:
+                        city = user_input.strip().title()
+                        break
+                elif user_input.strip().lower() == "n" or user_input.strip().lower() == "":
+                    break
+                else:
+                    print("That is not a valid input. Please enter either Y or N")
+                    continue
+
+            kwargs = {}
+
+            if airport_name is not None:
+                kwargs["airportName"] = airport_name
+            if country is not None:
+                kwargs["country"] = country
+            if city is not None:
+                kwargs["city"] = city
+
+            service.update(airport_id=airport_id, **kwargs)
+
+            #TODO: add is successfully updated.
+
         elif userinput.strip().lower() == "3":
             print("please answer the following questions regarding the new destination, "
                   "or input 'back' to return to the destination menu.")

@@ -1,7 +1,9 @@
 import contextlib
 import sqlite3
+from typing import Any
 
 from .Repository import Repository
+from ..Entities.Flight import Flight
 from ..Entities.FlightAssignment import FlightAssignment
 
 
@@ -91,3 +93,43 @@ class FlightAssignmentRepository():
                 (flight_id,)
             )
             return cursor.rowcount > 0
+
+    def get_schedule_for_pilot(self, pilot_id, start_date) -> list[Flight] | None:
+        with self.connect() as (db, cursor):
+            query = """
+                SELECT 
+                    f.id,
+                    f.status,
+                    f.scheduledDepart,
+                    f.scheduledArrive,
+                    f.originAirportId,
+                    f.destinationAirportId,
+                    f.actualDepart,
+                    f.actualArrive
+                FROM flight_assignment fa
+                JOIN flights f ON fa.flight_id = f.id
+                WHERE fa.pilot_id = ?
+                AND f.scheduledDepart > ?
+                ORDER BY f.scheduledDepart;
+            """
+            cursor.execute(query, (pilot_id, start_date))
+            rows = cursor.fetchall()
+
+            if not rows:
+                return []
+
+            flights = []
+            for row in rows:
+                flights.append(
+                    Flight(
+                        id=row["id"],
+                        status=row["status"],
+                        scheduledDepart=row["scheduledDepart"],
+                        scheduledArrive=row["scheduledArrive"],
+                        originAirport=row["originAirportId"],
+                        destinationAirport=row["destinationAirportId"],
+                        actualDepart=row["actualDepart"],
+                        actualArrive=row["actualArrive"]
+                    )
+                )
+            return flights

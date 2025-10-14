@@ -22,3 +22,6 @@ class FlightAssignmentService():
 
     def unassign_all_pilots_from_flight(self, flight_id) -> bool:
         return self.flight_assignment_repo.unassign_all_pilots_from_flight(flight_id=flight_id)
+
+    def get_schedule_for_pilot(self, pilot_id, start_date):
+        return self.flight_assignment_repo.get_schedule_for_pilot(pilot_id=pilot_id, start_date=start_date)

@@ -43,3 +43,6 @@ class DestinationService():
             self.destinationRepo.add()
         else:
             self.destinationRepo.add(**kwargs)
+
+    def update(self, airport_id: str, **kwargs) -> None:
+        self.destinationRepo.update(airportId=airport_id, **kwargs)
