@@ -1,10 +1,7 @@
 import contextlib
 import sqlite3
-from typing import Any
 
-from .Repository import Repository
 from ..Entities.Flight import Flight
-from ..Entities.FlightAssignment import FlightAssignment
 
 
 class FlightAssignmentRepository():
@@ -100,17 +97,17 @@ class FlightAssignmentRepository():
                 SELECT 
                     f.id,
                     f.status,
-                    f.scheduledDepart,
-                    f.scheduledArrive,
-                    f.originAirportId,
-                    f.destinationAirportId,
-                    f.actualDepart,
-                    f.actualArrive
+                    f.scheduled_depart,
+                    f.scheduled_arrive,
+                    f.origin_airport_id,
+                    f.destination_airport_id,
+                    f.actual_depart,
+                    f.actual_arrive
                 FROM flight_assignment fa
                 JOIN flights f ON fa.flight_id = f.id
                 WHERE fa.pilot_id = ?
-                AND f.scheduledDepart > ?
-                ORDER BY f.scheduledDepart;
+                AND f.scheduled_depart > ?
+                ORDER BY f.scheduled_depart;
             """
             cursor.execute(query, (pilot_id, start_date))
             rows = cursor.fetchall()
@@ -124,12 +121,12 @@ class FlightAssignmentRepository():
                     Flight(
                         id=row["id"],
                         status=row["status"],
-                        scheduledDepart=row["scheduledDepart"],
-                        scheduledArrive=row["scheduledArrive"],
-                        originAirport=row["originAirportId"],
-                        destinationAirport=row["destinationAirportId"],
-                        actualDepart=row["actualDepart"],
-                        actualArrive=row["actualArrive"]
+                        scheduled_depart=row["scheduled_depart"],
+                        scheduled_arrive=row["scheduled_arrive"],
+                        origin_airport=row["origin_airport_id"],
+                        destination_airport=row["destination_airport_id"],
+                        actual_depart=row["actual_depart"],
+                        actual_arrive=row["actual_arrive"]
                     )
                 )
             return flights

@@ -1,6 +1,5 @@
 import contextlib
 import sqlite3
-from http import HTTPStatus
 
 from FlightManagementLab_UOfBath.Entities.Destination import Destination
 from .Repository import Repository
@@ -33,8 +32,8 @@ class DestinationRepository(Repository[Destination]):
         with self.connect() as (db, cursor):
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS destinations (
-                    airportId VARCHAR PRIMARY KEY,
-                    airportName VARCHAR,
+                    airport_id VARCHAR PRIMARY KEY,
+                    airport_name VARCHAR,
                     country TEXT,
                     city TEXT
                 )
@@ -57,17 +56,17 @@ class DestinationRepository(Repository[Destination]):
         with self.connect() as (db, cursor):
             cursor.executemany("""
                 INSERT OR IGNORE INTO destinations 
-                (airportId, airportName, country, city)
+                (airport_id, airport_name, country, city)
                 VALUES (?, ?, ?, ?)
             """, dummy_data)
             print(f"✅ Inserted {cursor.rowcount} new destinations (existing ones ignored).")
 
-    def get(self, airportId: str) -> Destination:
+    def get(self, airport_id: str) -> Destination:
         with self.connect() as (db, cursor):
-            cursor.execute("SELECT * FROM destinations WHERE airportId=?", (airportId,))
+            cursor.execute("SELECT * FROM destinations WHERE airport_id=?", (airport_id,))
             row = cursor.fetchone()
             if row is None:
-                raise ValueError(f"Destination with id {airportId} does not exist")
+                raise ValueError(f"Destination with id {airport_id} does not exist")
             return Destination(*row)
 
     def get_all(self) -> list[Destination]:
@@ -83,36 +82,37 @@ class DestinationRepository(Repository[Destination]):
     def find_by_country(self, country: str) -> list[Destination]:
         with self.connect() as (db, cursor):
             cursor.execute("SELECT * FROM destinations WHERE country=?", (country,))
+            return [Destination(*row) for row in cursor.fetchall()]
 
     def add(self, destination: Destination | None = None, **kwargs: object) -> None:
         if destination:
-            airportId, airportName, country, city = (
-                destination.airportId,
-                destination.airportName,
+            airport_id, airport_name, country, city = (
+                destination.airport_id,
+                destination.airport_name,
                 destination.country,
                 destination.city,
             )
-        elif {"airportId", "airportName", "country", "city"} <= kwargs.keys():
-            airportId = kwargs["airportId"]
-            airportName = kwargs["airportName"]
+        elif {"airport_id", "airport_name", "country", "city"} <= kwargs.keys():
+            airport_id = kwargs["airport_id"]
+            airport_name = kwargs["airport_name"]
             country = kwargs["country"]
             city = kwargs["city"]
         else:
-            raise ValueError("Must provide a Destination object or airportId, airportName, country, city as kwargs")
+            raise ValueError("Must provide a Destination object or airport_id, airport_name, country, city as kwargs")
 
         with self.connect() as (db, cursor):
             try:
                 cursor.execute(
-                    "INSERT INTO destinations (airportId, airportName, country, city) VALUES (?, ?, ?, ?, ?)",
-                    (airportId, airportName, country, city),
+                    "INSERT INTO destinations (airport_id, airport_name, country, city) VALUES (?, ?, ?, ?)",
+                    (airport_id, airport_name, country, city),
                 )
             except Exception as e:
                 db.rollback()
                 print(f"insert failed: {e}")
                 raise e
 
-    def update(self, airportId: str, **kwargs: object) -> None:
-        allowed_fields = {"airportName", "country", "city"}
+    def update(self, airport_id: str, **kwargs: object) -> None:
+        allowed_fields = {"airport_name", "country", "city"}
         set_clauses = []
         values = []
 
@@ -124,14 +124,14 @@ class DestinationRepository(Repository[Destination]):
         if not set_clauses:
             raise ValueError("No valid fields provided to update")
 
-        values.append(airportId)
+        values.append(airport_id)
 
         with self.connect() as (db, cursor):
             cursor.execute(
-                f"UPDATE destinations SET {', '.join(set_clauses)} WHERE airportId=?",
+                f"UPDATE destinations SET {', '.join(set_clauses)} WHERE airport_id=?",
                 tuple(values),
             )
 
-    def delete(self, airportId: str) -> None:
+    def delete(self, airport_id: str) -> None:
         with self.connect() as (db, cursor):
-            cursor.execute("DELETE FROM destinations WHERE airportId=?", (airportId,))
+            cursor.execute("DELETE FROM destinations WHERE airport_id=?", (airport_id,))

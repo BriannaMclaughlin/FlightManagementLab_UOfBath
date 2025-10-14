@@ -1,6 +1,5 @@
 import contextlib
 import sqlite3
-from http import HTTPStatus
 
 from .Repository import Repository
 from ..Entities.Pilot import Pilot

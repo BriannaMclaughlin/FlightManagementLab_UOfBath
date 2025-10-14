@@ -1,10 +1,6 @@
-from datetime import datetime
-from typing import Optional
-
-from FlightManagementLab_UOfBath.Entities.Flight import Flight
 from FlightManagementLab_UOfBath.Repositories.FlightAssignmentRepository import FlightAssignmentRepository
 
-class FlightAssignmentService():
+class FlightAssignmentService:
     def __init__(self, db_path="FlightManagementDB.db"):
         self.flight_assignment_repo = FlightAssignmentRepository(db_path)
 

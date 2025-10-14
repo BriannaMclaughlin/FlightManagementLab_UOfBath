@@ -1,9 +1,7 @@
 import contextlib
 import datetime
 import sqlite3
-from http import HTTPStatus
 
-from FlightManagementLab_UOfBath.Entities.Destination import Destination
 from .Repository import Repository
 from ..DTOs.FlightDetails import FlightDetails
 from ..Entities.Flight import Flight
@@ -41,20 +39,19 @@ class FlightRepository(Repository[Flight]):
                 CREATE TABLE IF NOT EXISTS flights (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     status TEXT,
-                    scheduledDepart INTEGER,
-                    scheduledArrive INTEGER,
-                    actualDepart INTEGER,
-                    actualArrive INTEGER,
-                    originAirportId VARCHAR NOT NULL,
-                    destinationAirportId VARCHAR NOT NULL,
-                    FOREIGN KEY (originAirportId) REFERENCES destinations(airportId),
-                    FOREIGN KEY (destinationAirportId) REFERENCES destinations(airportId)
-                    UNIQUE(originAirportId, destinationAirportId, scheduledDepart)
+                    scheduled_depart INTEGER,
+                    scheduled_arrive INTEGER,
+                    actual_depart INTEGER,
+                    actual_arrive INTEGER,
+                    origin_airport_id VARCHAR NOT NULL,
+                    destination_airport_id VARCHAR NOT NULL,
+                    FOREIGN KEY (origin_airport_id) REFERENCES destinations(airport_id),
+                    FOREIGN KEY (destination_airport_id) REFERENCES destinations(airport_id)
+                    UNIQUE(origin_airport_id, destination_airport_id, scheduled_depart)
                 )
             """)
 
     def insert_dummy_data(self) -> None:
-        now = datetime.datetime.now()
 
         dummy_flights = [
             # status, scheduledDepart, scheduledArrive, actualDepart, actualArrive, origin, destination
@@ -78,37 +75,37 @@ class FlightRepository(Repository[Flight]):
         with self.connect() as (db, cursor):
             cursor.executemany("""
                 INSERT OR IGNORE INTO flights
-                (status, scheduledDepart, scheduledArrive, actualDepart, actualArrive, originAirportId, destinationAirportId)
+                (status, scheduled_depart, scheduled_arrive, actual_depart, actual_arrive, origin_airport_id, destination_airport_id)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
             """, dummy_flights)
             print(f"✅ Inserted {cursor.rowcount} new flights (existing ones ignored).")
 
-    def get(self, id: int) -> Flight:
+    def get(self, flight_id: int) -> Flight:
         with self.connect() as (db, cursor):
-            cursor.execute("SELECT * FROM flights WHERE id=?", (id,))
+            cursor.execute("SELECT * FROM flights WHERE id=?", (flight_id,))
             row = cursor.fetchone()
             if row is None:
-                raise ValueError(f"Flight with id {id} does not exist")
+                raise ValueError(f"Flight with id {flight_id} does not exist")
             return Flight(
                 id=row["id"],
                 status=row["status"],
-                scheduledDepart=row["scheduledDepart"],
-                scheduledArrive=row["scheduledArrive"],
-                actualDepart=row["actualDepart"],
-                actualArrive=row["actualArrive"],
-                originAirport=row["originAirportId"],
-                destinationAirport=row["destinationAirportId"])
+                scheduled_depart=row["scheduled_depart"],
+                scheduled_arrive=row["scheduled_arrive"],
+                actual_depart=row["actual_depart"],
+                actual_arrive=row["actual_arrive"],
+                origin_airport=row["origin_airport_id"],
+                destination_airport=row["destination_airport_id"])
 
     def get_flight_details(self, flight_id: int) -> FlightDetails:
         with self.connect() as (db, cursor):
             cursor.execute("""
-            SELECT f.id, f.status, f.scheduledDepart, f.scheduledArrive, f.actualDepart, f.actualArrive,
-            o.airportId AS origin_id, o.airportName AS origin_name, o.city AS origin_city, o.country AS origin_country,
-            d.airportId AS destination_id, d.airportName AS destination_name, d.city AS destination_city,
+            SELECT f.id, f.status, f.scheduled_depart, f.scheduled_arrive, f.actual_depart, f.actual_arrive,
+            o.airport_id AS origin_id, o.airport_name AS origin_name, o.city AS origin_city, o.country AS origin_country,
+            d.airport_id AS destination_id, d.airport_name AS destination_name, d.city AS destination_city,
             d.country AS destination_country
             FROM flights f
-            JOIN destinations o ON f.originAirportId = o.airportId
-            JOIN destinations d ON f.destinationAirportId = d.airportId
+            JOIN destinations o ON f.origin_airport_id = o.airport_id
+            JOIN destinations d ON f.destination_airport_id = d.airport_id
             WHERE f.id = ?
             """, (flight_id,)
             )
@@ -143,10 +140,10 @@ class FlightRepository(Repository[Flight]):
             return FlightDetails(
                 id=flight_row["id"],
                 status=flight_row["status"],
-                scheduledDepart=flight_row["scheduledDepart"],
-                scheduledArrive=flight_row["scheduledArrive"],
-                actualDepart=flight_row["actualDepart"],
-                actualArrive=flight_row["actualArrive"],
+                scheduled_depart=flight_row["scheduled_depart"],
+                scheduled_arrive=flight_row["scheduled_arrive"],
+                actual_depart=flight_row["actual_depart"],
+                actual_arrive=flight_row["actual_arrive"],
                 origin=origin,
                 destination=destination,
                 pilots=pilots
@@ -159,44 +156,44 @@ class FlightRepository(Repository[Flight]):
 
     def add(self, flight: Flight | None = None, **kwargs: object) -> None:
         if flight:
-            (status, scheduledDepart, scheduledArrive, actualDepart, actualArrive, originAirport,
-             destinationAirport) = (
+            (status, scheduled_depart, scheduled_arrive, actual_depart, actual_arrive, origin_airport,
+             destination_airport) = (
                 flight.status,
-                flight.scheduledDepart,
-                flight.scheduledArrive,
-                flight.actualDepart,
-                flight.actualArrive,
-                flight.originAirport,
-                flight.destinationAirport,
+                flight.scheduled_depart,
+                flight.scheduled_arrive,
+                flight.actual_depart,
+                flight.actual_arrive,
+                flight.origin_airport,
+                flight.destination_airport,
             )
-        elif {"status", "scheduledDepart", "scheduledArrive", "actualDepart",
-              "actualArrive", "originAirport", "destinationAirport"} <= kwargs.keys():
+        elif {"status", "scheduled_depart", "scheduled_arrive", "actual_depart",
+              "actual_arrive", "origin_airport", "destination_airport"} <= kwargs.keys():
             status = kwargs["status"]
-            scheduledDepart = kwargs["scheduledDepart"]
-            scheduledArrive = kwargs["scheduledArrive"]
-            actualDepart = kwargs["actualDepart"]
-            actualArrive = kwargs["actualArrive"]
-            originAirport = kwargs["originAirport"]
-            destinationAirport = kwargs["destinationAirport"]
+            scheduled_depart = kwargs["scheduled_depart"]
+            scheduled_arrive = kwargs["scheduled_arrive"]
+            actual_depart = kwargs["actual_depart"]
+            actual_arrive = kwargs["actual_arrive"]
+            origin_airport = kwargs["origin_airport"]
+            destination_airport = kwargs["destination_airport"]
         else:
-            raise ValueError("Must provide a Flight object or status, scheduledDepart, scheduledArrive,"
-                             "actualDepart, actualArrive, originAirport and destinationAirport as kwargs")
+            raise ValueError("Must provide a Flight object or status, scheduled_depart, scheduled_arrive,"
+                             "actual_depart, actual_arrive, origin_airport and destination_airport as kwargs")
 
         with self.connect() as (db, cursor):
             try:
                 cursor.execute(
-                    "INSERT INTO flights (status, scheduledDepart, scheduledArrive, actualDepart, "
-                    "actualArrive, originAirportId, destinationAirportId) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                    (status, scheduledDepart, scheduledArrive, actualDepart, actualArrive, originAirport,
-                     destinationAirport),
+                    "INSERT INTO flights (status, scheduled_depart, scheduled_arrive, actual_depart, "
+                    "actual_arrive, origin_airport_id, destination_airport_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (status, scheduled_depart, scheduled_arrive, actual_depart, actual_arrive, origin_airport,
+                     destination_airport),
                 )
             except Exception as e:
                 db.rollback()
                 raise e
 
-    def update(self, id: int, **kwargs: object) -> None:
-        allowed_fields = {"status", "scheduledDepart", "scheduledArrive", "actualDepart", "actualArrive",
-                          "originAirport", "destinationAirport"}
+    def update(self, flight_id: int, **kwargs: object) -> None:
+        allowed_fields = {"status", "scheduled_depart", "scheduled_arrive", "actual_depart", "actual_arrive",
+                          "origin_airport", "destination_airport"}
         set_clauses = []
         values = []
 
@@ -208,7 +205,7 @@ class FlightRepository(Repository[Flight]):
         if not set_clauses:
             raise ValueError("No valid fields provided to update")
 
-        values.append(id)
+        values.append(flight_id)
 
         with self.connect() as (db, cursor):
             cursor.execute(
@@ -216,29 +213,29 @@ class FlightRepository(Repository[Flight]):
                 tuple(values),
             )
 
-    def delete(self, id: int) -> None:
+    def delete(self, flight_id: int) -> None:
         with self.connect() as (db, cursor):
-            cursor.execute("DELETE FROM flights WHERE id=?", (id,))
+            cursor.execute("DELETE FROM flights WHERE id=?", (flight_id,))
 
     def find_by_origin(self, origin: str, start: datetime, end: datetime) -> list[Flight]:
         with self.connect() as (db, cursor):
             cursor.execute("""
                 SELECT * FROM flights
-                WHERE originAirportId = ?
-                AND scheduledDepart >= ?
-                AND scheduledDepart <= ?
+                WHERE origin_airport_id = ?
+                AND scheduled_depart >= ?
+                AND scheduled_depart <= ?
             """, (origin, start, end))
             rows = cursor.fetchall()
             return [
                 Flight(
                     id=row["id"],
                     status=row["status"],
-                    scheduledDepart=row["scheduledDepart"],
-                    scheduledArrive=row["scheduledArrive"],
-                    actualDepart=row["actualDepart"],
-                    actualArrive=row["actualArrive"],
-                    originAirport=row["originAirportId"],
-                    destinationAirport=row["destinationAirportId"]
+                    scheduled_depart=row["scheduled_depart"],
+                    scheduled_arrive=row["scheduled_arrive"],
+                    actual_depart=row["actual_depart"],
+                    actual_arrive=row["actual_arrive"],
+                    origin_airport=row["origin_airport_id"],
+                    destination_airport=row["destination_airport_id"]
                 )
                 for row in rows
             ]
@@ -247,21 +244,21 @@ class FlightRepository(Repository[Flight]):
         with self.connect() as (db, cursor):
             cursor.execute("""
                 SELECT * FROM flights
-                WHERE destinationAirportId = ?
-                AND scheduledDepart >= ?
-                AND scheduledDepart <= ?
+                WHERE destination_airport_id = ?
+                AND scheduled_depart >= ?
+                AND scheduled_depart <= ?
             """, (destination, start, end))
             rows = cursor.fetchall()
             return [
                 Flight(
                     id=row["id"],
                     status=row["status"],
-                    scheduledDepart=row["scheduledDepart"],
-                    scheduledArrive=row["scheduledArrive"],
-                    actualDepart=row["actualDepart"],
-                    actualArrive=row["actualArrive"],
-                    originAirport=row["originAirportId"],
-                    destinationAirport=row["destinationAirportId"]
+                    scheduled_depart=row["scheduled_depart"],
+                    scheduled_arrive=row["scheduled_arrive"],
+                    actual_depart=row["actual_depart"],
+                    actual_arrive=row["actual_arrive"],
+                    origin_airport=row["origin_airport_id"],
+                    destination_airport=row["destination_airport_id"]
                 )
                 for row in rows
             ]
@@ -270,22 +267,22 @@ class FlightRepository(Repository[Flight]):
         with self.connect() as (db, cursor):
             cursor.execute("""
                 SELECT * FROM flights
-                WHERE originAirportId = ?
-                AND destinationAirportId = ?
-                AND scheduledDepart >= ?
-                AND scheduledDepart <= ?
+                WHERE origin_airport_id = ?
+                AND destination_airport_id = ?
+                AND scheduled_depart >= ?
+                AND scheduled_depart <= ?
             """, (origin, destination, start, end))
             rows = cursor.fetchall()
             return [
                 Flight(
                     id=row["id"],
                     status=row["status"],
-                    scheduledDepart=row["scheduledDepart"],
-                    scheduledArrive=row["scheduledArrive"],
-                    actualDepart=row["actualDepart"],
-                    actualArrive=row["actualArrive"],
-                    originAirport=row["originAirportId"],
-                    destinationAirport=row["destinationAirportId"]
+                    scheduled_depart=row["scheduled_depart"],
+                    scheduled_arrive=row["scheduled_arrive"],
+                    actual_depart=row["actual_depart"],
+                    actual_arrive=row["actual_arrive"],
+                    origin_airport=row["origin_airport_id"],
+                    destination_airport=row["destination_airport_id"]
                 )
                 for row in rows
             ]

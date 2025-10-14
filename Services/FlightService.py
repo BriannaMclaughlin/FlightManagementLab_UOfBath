@@ -5,13 +5,13 @@ from FlightManagementLab_UOfBath.Entities.Flight import Flight
 from FlightManagementLab_UOfBath.Repositories.FlightRepository import FlightRepository
 
 
-class FlightService():
+class FlightService:
     def __init__(self, db_path="FlightManagementDB.db"):
-        self.flightRepo = FlightRepository(db_path)
+        self.flight_repo = FlightRepository(db_path)
 
-    def getFlight(self, id: int):
+    def get_flight(self, flight_id: int):
         try:
-            return self.flightRepo.get(id=id)
+            return self.flight_repo.get(flight_id=flight_id)
         except ValueError as e:
             print(e)
             print("\n")
@@ -19,46 +19,46 @@ class FlightService():
 
     def get_flight_details(self, flight_id):
         try:
-            return self.flightRepo.get_flight_details(flight_id=flight_id)
+            return self.flight_repo.get_flight_details(flight_id=flight_id)
         except ValueError as e:
             print(e)
             print("\n")
             return None
 
-    def addFlight(self,
+    def add_flight(self,
                   status: str,
-                  originAirport: str,
-                  destinationAirport: str,
-                  scheduledDepart: Optional[datetime] = None,
-                  scheduledArrive: Optional[datetime] = None,
-                  actualDepart: Optional[datetime] = None,
-                  actualArrive: Optional[datetime] = None) -> None:
+                  origin_airport: str,
+                  destination_airport: str,
+                  scheduled_depart: Optional[datetime] = None,
+                  scheduled_arrive: Optional[datetime] = None,
+                  actual_depart: Optional[datetime] = None,
+                  actual_arrive: Optional[datetime] = None) -> None:
 
         flight = Flight(
             status=status,
-            scheduledDepart=scheduledDepart,
-            scheduledArrive=scheduledArrive,
-            actualDepart=actualDepart,
-            actualArrive=actualArrive,
-            originAirport=originAirport,
-            destinationAirport=destinationAirport
+            scheduled_depart=scheduled_depart,
+            scheduled_arrive=scheduled_arrive,
+            actual_depart=actual_depart,
+            actual_arrive=actual_arrive,
+            origin_airport=origin_airport,
+            destination_airport=destination_airport
         )
 
-        self.flightRepo.add(flight=flight)
+        self.flight_repo.add(flight=flight)
 
-    def deleteFlight(self, id):
-        self.flightRepo.delete(id)
+    def delete_flight(self, flight_id):
+        self.flight_repo.delete(flight_id)
 
-    def update_flight(self, id: int, **kwargs: object) -> None:
-        self.flightRepo.update(id, **kwargs)
+    def update_flight(self, flight_id: int, **kwargs: object) -> None:
+        self.flight_repo.update(flight_id, **kwargs)
 
     def find_by_origin(self, origin: str, start: datetime, end: datetime) -> str:
-        result = self.flightRepo.find_by_origin(origin, start, end)
+        result = self.flight_repo.find_by_origin(origin, start, end)
         string = ""
         if result:
             for flight in result:
-                string += (f"ID -> {flight.id}: {flight.originAirport} to {flight.destinationAirport} "
-                           f"({flight.status}) on {flight.scheduledDepart} \n")
+                string += (f"ID -> {flight.id}: {flight.origin_airport} to {flight.destination_airport} "
+                           f"({flight.status}) on {flight.scheduled_depart} \n")
 
         if len(string) > 0:
             return string
@@ -67,12 +67,12 @@ class FlightService():
             return string
 
     def find_by_destination(self, destination: str, start: datetime, end: datetime) -> str:
-        result = self.flightRepo.find_by_destination(destination, start, end)
+        result = self.flight_repo.find_by_destination(destination, start, end)
         string = ""
         if result:
             for flight in result:
-                string += (f"ID -> {flight.id}: {flight.originAirport} to {flight.destinationAirport} "
-                           f"({flight.status}) on {flight.scheduledDepart} \n")
+                string += (f"ID -> {flight.id}: {flight.origin_airport} to {flight.destination_airport} "
+                           f"({flight.status}) on {flight.scheduled_depart} \n")
 
         if len(string) > 0:
             return string
@@ -81,12 +81,12 @@ class FlightService():
             return string
 
     def find_by_origin_and_destination(self, origin: str, destination: str, start: datetime, end: datetime) -> str:
-        result = self.flightRepo.find_by_origin_and_destination(origin, destination, start, end)
+        result = self.flight_repo.find_by_origin_and_destination(origin, destination, start, end)
         string = ""
         if result:
             for flight in result:
-                string += (f"ID -> {flight.id}: {flight.originAirport} to {flight.destinationAirport} "
-                           f"({flight.status}) on {flight.scheduledDepart} \n")
+                string += (f"ID -> {flight.id}: {flight.origin_airport} to {flight.destination_airport} "
+                           f"({flight.status}) on {flight.scheduled_depart} \n")
 
         if len(string) > 0:
             return string
@@ -95,10 +95,10 @@ class FlightService():
                        f"of {destination}")
             return string
 
-    def flightExists(self, flight_id: int):
+    def flight_exists(self, flight_id: int):
         try:
-            flight = self.flightRepo.get(flight_id)
+            flight = self.flight_repo.get(flight_id)
             if flight:
                 return True
-        except ValueError as e:
+        except ValueError:
             return False

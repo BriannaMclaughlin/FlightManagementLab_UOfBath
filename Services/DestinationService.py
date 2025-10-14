@@ -2,47 +2,48 @@ from FlightManagementLab_UOfBath.Entities.Destination import Destination
 from FlightManagementLab_UOfBath.Repositories.DestinationRepository import DestinationRepository
 
 
-class DestinationService():
+class DestinationService:
     def __init__(self, db_path="FlightManagementDB.db"):
-        self.destinationRepo = DestinationRepository(db_path)
+        self.destination_repo = DestinationRepository(db_path)
 
-    def getDestination(self, airportId: str):
+    def get_destination(self, airport_id: str):
         try:
-            return self.destinationRepo.get(airportId=airportId)
+            return self.destination_repo.get(airport_id=airport_id)
         except ValueError as e:
             print(e)
             print("\n")
             return None
 
-    def destinationExists(self, airportId: str):
+    def destination_exists(self, airport_id: str):
         try:
-            destination = self.destinationRepo.get(airportId=airportId)
+            destination = self.destination_repo.get(airport_id=airport_id)
             if destination:
                 return True
-        except ValueError as e:
+        except ValueError:
             return False
 
     def find_by_city(self, city: str) -> str:
-        result =  self.destinationRepo.find_by_city(city)
+        result =  self.destination_repo.find_by_city(city)
         string = ""
         if result:
             for destination in result:
-                string += (f"{destination.airportId}: {destination.airportName}, {destination.city}, "
+                string += (f"{destination.airport_id}: {destination.airport_name}, {destination.city}, "
                            f"{destination.country} \n")
 
         if len(string) > 0:
             return string
         else:
             string += f"No destinations available with for {city}"
+            return string
 
     def find_by_country(self, country: str) -> list[Destination]:
-        return self.destinationRepo.find_by_country(country)
+        return self.destination_repo.find_by_country(country)
 
     def add(self, destination: Destination | None = None, **kwargs: object) -> None:
         if destination:
-            self.destinationRepo.add()
+            self.destination_repo.add()
         else:
-            self.destinationRepo.add(**kwargs)
+            self.destination_repo.add(**kwargs)
 
     def update(self, airport_id: str, **kwargs) -> None:
-        self.destinationRepo.update(airportId=airport_id, **kwargs)
+        self.destination_repo.update(airport_id=airport_id, **kwargs)
