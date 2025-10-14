@@ -1,5 +1,4 @@
 from datetime import datetime
-from os import WCONTINUED
 
 from FlightManagementLab_UOfBath.Entities.Destination import Destination
 from FlightManagementLab_UOfBath.Repositories.DestinationRepository import DestinationRepository
@@ -14,6 +13,9 @@ destinationService = DestinationService()
 flightService = FlightService()
 pilotService = PilotService()
 flightAssignmentService = FlightAssignmentService()
+
+valid_status = ["Scheduled", "Delayed", "Completed", "In Flight"]
+valid_rank = ["Captain", "First Officer", "Second Officer"]
 
 #TODO: change all variables and methods to snake case because python. Only classes should be camel case
 
@@ -37,9 +39,9 @@ def ask_for_datetime(label: str) -> datetime | None:
             continue
         day = int(day)
 
-        timeRaw = input(f"Enter {label} time (HH:MM): ")
+        time_raw = input(f"Enter {label} time (HH:MM): ")
         try:
-            hour, minute = map(int, timeRaw.split(":"))
+            hour, minute = map(int, time_raw.split(":"))
             if not (0 <= hour <= 23 and 0 <= minute <= 59):
                 raise ValueError
         except Exception:
@@ -247,10 +249,12 @@ def flight_menu(service: FlightService):
 
                     if user_input.strip().lower() == "back":
                         return
-                    else:
-                        #TODO check is a valid status
+                    elif user_input.strip().lower().title() in valid_status:
                         status = user_input.strip().title()
                         break
+                    else:
+                        print("That is not a valid status. Please enter Scheduled, Delayed, In Flight or Completed")
+                        continue
                 elif user_input.strip().lower() == "n" or user_input.strip().lower() == "":
                     break
                 else:
@@ -468,7 +472,7 @@ def pilotMenu(service: PilotService):
                                "2. Update a pilots information \n"
                                "3. Add a pilot 🧑🏽‍✈️\n"
                                "4. View pilot schedule \n" #TODO
-                               "5. Add a flight to a pilots schedule \n" #TODO
+                               "5. Add a flight to a pilots schedule \n"
                                "6. Delete a pilot \n"
                              "* input 'back' to return to main menu * \n")
 
@@ -578,10 +582,11 @@ def pilotMenu(service: PilotService):
 
                     if user_input.strip().lower() == "back":
                         return
-                    else:
-                        #TODO check is a valid rank
+                    elif user_input.strip().lower().title() in valid_rank:
                         rank = user_input.strip().title()
                         break
+                    else:
+                        print("That is not a valid rank. Please enter either Captain, First Officer or Second Officer.")
                 elif user_input.strip().lower() == "n" or user_input.strip().lower() == "":
                     break
                 else:
@@ -765,9 +770,19 @@ def pilotMenu(service: PilotService):
                 if user_input.strip().lower() == "back":
                     return
                 elif user_input.strip().isnumeric():
-                    #TODO: check pilot is active
-                    pilot_id = int(user_input.strip())
-                    break
+                    if pilotService.pilotExists(int(user_input.strip())):
+                        pilot = pilotService.get_pilot(int(user_input.strip()))
+                        if pilot.active:
+                            pilot_id = int(user_input.strip())
+                            break
+                        else:
+                            print(f"{pilot.rank} {pilot.first_name} {pilot.last_name} is not active. "
+                                  f"Please choose an active pilot or update this pilots details first.")
+                            continue
+                    else:
+                        print(f"No pilot with an id of {user_input.strip()} exists. "
+                              f"Please try again or input 'find' to search for the pilot.")
+                        continue
                 elif user_input.strip().lower() == "find":
                     print(find_helper("pilot"))
                     continue
@@ -781,9 +796,13 @@ def pilotMenu(service: PilotService):
                 if user_input.strip().lower() == "back":
                     return
                 elif user_input.strip().isnumeric():
+                    if flightService.flightExists(int(user_input.strip())):
                     #TODO: add some checks that the pilot is available and in the right location
-                    flight_id = int(user_input.strip())
-                    break
+                        flight_id = int(user_input.strip())
+                        break
+                    else:
+                        print(f"There is no flight with an id of {user_input.strip()}")
+                        continue
                 elif user_input.strip().lower() == "find":
                     print(find_helper("flight"))
                     continue
