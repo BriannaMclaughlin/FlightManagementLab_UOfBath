@@ -3,5 +3,5 @@ import datetime
 
 @dataclass
 class FlightAssignment:
-    flightId: int
-    pilotId: int
+    flight_id: int
+    pilot_id: int

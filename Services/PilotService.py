@@ -44,7 +44,6 @@ class PilotService:
         string = ""
         if result:
             for pilot in result:
-                active = ""
                 if pilot.active:
                     active = "Active"
                 else:
@@ -56,11 +55,12 @@ class PilotService:
             return string
         else:
             string += f"No pilots available with a last name of {last_name}"
+            return string
 
-    def pilotExists(self, pilot_id: int):
+    def pilot_exists(self, pilot_id: int):
         try:
             pilot = self.pilot_repo.get(pilot_id)
             if pilot:
                 return True
-        except ValueError as e:
+        except ValueError:
             return False

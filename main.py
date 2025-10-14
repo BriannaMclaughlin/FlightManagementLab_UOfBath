@@ -1,9 +1,5 @@
 from datetime import datetime
 
-from FlightManagementLab_UOfBath.Entities.Destination import Destination
-from FlightManagementLab_UOfBath.Repositories.DestinationRepository import DestinationRepository
-import sqlite3
-
 from FlightManagementLab_UOfBath.Services.DestinationService import DestinationService
 from FlightManagementLab_UOfBath.Services.FlightAssignmentService import FlightAssignmentService
 from FlightManagementLab_UOfBath.Services.FlightService import FlightService
@@ -16,8 +12,6 @@ flightAssignmentService = FlightAssignmentService()
 
 valid_status = ["Scheduled", "Delayed", "Completed", "In Flight"]
 valid_rank = ["Captain", "First Officer", "Second Officer"]
-
-#TODO: change all variables and methods to snake case because python. Only classes should be camel case
 
 def ask_for_datetime(label: str) -> datetime | None:
     while True:
@@ -44,7 +38,7 @@ def ask_for_datetime(label: str) -> datetime | None:
             hour, minute = map(int, time_raw.split(":"))
             if not (0 <= hour <= 23 and 0 <= minute <= 59):
                 raise ValueError
-        except Exception:
+        except ValueError:
             print("Invalid time")
             continue
 
@@ -81,7 +75,7 @@ def find_helper(label: str) -> None | str:
 
                     if origin.strip().lower() == "back":
                         break
-                    elif destinationService.destinationExists(origin.strip().upper()):
+                    elif destinationService.destination_exists(origin.strip().upper()):
                         print("Please enter a date range for the search.")
                         print("Start Date: ")
                         start = ask_for_datetime("start")
@@ -98,7 +92,7 @@ def find_helper(label: str) -> None | str:
 
                     if destination.strip().lower() == "back":
                         break
-                    elif destinationService.destinationExists(destination.strip().upper()):
+                    elif destinationService.destination_exists(destination.strip().upper()):
                         print("Please enter a date range for the search.")
                         print("Start Date: ")
                         start = ask_for_datetime("start")
@@ -116,7 +110,7 @@ def find_helper(label: str) -> None | str:
 
                         if origin.strip().lower() == "back":
                             break
-                        if destinationService.destinationExists(origin.strip().upper()) is False:
+                        if destinationService.destination_exists(origin.strip().upper()) is False:
                             print(f"There is no airport in our system with id {origin.strip().upper()}. \n"
                                   f"Please try again, or go back and add a new destination to the system. \n")
                             continue
@@ -127,7 +121,7 @@ def find_helper(label: str) -> None | str:
                         if destination.strip().lower() == "back":
                             break
 
-                        if destinationService.destinationExists(origin.strip().upper()) is False:
+                        if destinationService.destination_exists(origin.strip().upper()) is False:
                             print(f"There is no airport in our system with id {origin.strip().upper()}. \n"
                                   f"Please try again, or go back and add a new destination to the system. \n")
                             continue
@@ -147,35 +141,35 @@ def find_helper(label: str) -> None | str:
     return None
 
 
-def flight_menu(service: FlightService):
+def flight_menu():
     print("Flight Information \n")
     while True:
-        userinputraw = input("Would you like to: \n"
+        user_input_raw = input("Would you like to: \n"
                           "1. View a flights information \n"
                           "2. Update a flights information \n"
                           "3. Add a flight \n"
                           "4. Delete a flight \n"
                           "* input 'back' to return to main menu * \n")
 
-        userinput = userinputraw.strip().lower()
+        user_input = user_input_raw.strip().lower()
 
-        if userinput == "back":
+        if user_input == "back":
             return
 
-        if userinput == "1":
+        if user_input == "1":
             while True:
                 flight_details = None
-                userinputraw = input("Please enter the flight id or 'find' to lookup the flight id. \n")
-                userinput = userinputraw.strip().lower()
+                user_input_raw = input("Please enter the flight id or 'find' to lookup the flight id. \n")
+                user_input = user_input_raw.strip().lower()
 
-                if userinput == "back":
+                if user_input == "back":
                     break
-                elif userinput == "find":
+                elif user_input == "find":
                     print(find_helper("flight"))
                     continue
-                elif userinput.isnumeric():
-                    if flightService.flightExists(int(userinput)):
-                        flight_details = flightService.get_flight_details(int(userinput))
+                elif user_input.isnumeric():
+                    if flightService.flight_exists(int(user_input)):
+                        flight_details = flightService.get_flight_details(int(user_input))
                     else:
                         print("That flight id does not exist.")
                 else:
@@ -187,12 +181,12 @@ def flight_menu(service: FlightService):
                           f"Status: {flight_details.status} \n"
                           f"Route: {flight_details.origin.get("city")} ({flight_details.origin.get("airport_id")}) to "
                           f"{flight_details.destination.get("city")} ({flight_details.destination.get("airport_id")}) \n"
-                          f"Scheduled Departure: {flight_details.scheduledDepart} \n"
-                          f"Scheduled Arrival: {flight_details.scheduledArrive} \n")
-                    if flight_details.actualDepart is not None:
-                        to_print += f"Actual Departure: {flight_details.actualDepart} \n"
-                    if flight_details.actualArrive is not None:
-                        to_print += f"Actual Arrival: {flight_details.actualArrive} \n"
+                          f"Scheduled Departure: {flight_details.scheduled_depart} \n"
+                          f"Scheduled Arrival: {flight_details.scheduled_arrive} \n")
+                    if flight_details.actual_depart is not None:
+                        to_print += f"Actual Departure: {flight_details.actual_depart} \n"
+                    if flight_details.actual_arrive is not None:
+                        to_print += f"Actual Arrival: {flight_details.actual_arrive} \n"
 
                     if len(flight_details.pilots) > 0:
                         to_print += f"Pilots: \n"
@@ -204,11 +198,11 @@ def flight_menu(service: FlightService):
                     print(to_print)
                     break
                 else:
-                    print(f"No flight found with id: {userinput}")
+                    print(f"No flight found with id: {user_input}")
                     break
 
 
-        elif userinput == "2":
+        elif user_input == "2":
             #TODO: status can only change to complete if actual depart and arrive are completed,
             # then flight hours must be added to each pilot.
             flight_id = None
@@ -228,7 +222,7 @@ def flight_menu(service: FlightService):
                     print(find_helper("flight"))
                     continue
                 elif user_input.strip().isnumeric():
-                    if flightService.flightExists(int(user_input.strip())):
+                    if flightService.flight_exists(int(user_input.strip())):
                         flight_id = int(user_input)
                         break
                     else:
@@ -267,6 +261,7 @@ def flight_menu(service: FlightService):
                     return
                 elif user_input.strip().lower() == "y":
                     scheduled_depart = ask_for_datetime("depart")
+                    break
                 elif user_input.strip().lower() == "n" or user_input.strip().lower() == "":
                     break
                 else:
@@ -354,117 +349,126 @@ def flight_menu(service: FlightService):
             if status is not None:
                 kwargs["status"] = status
             if scheduled_depart is not None:
-                kwargs["scheduledDepart"] = scheduled_depart
+                kwargs["scheduled_depart"] = scheduled_depart
             if scheduled_arrive is not None:
-                kwargs["scheduledArrive"] = scheduled_arrive
+                kwargs["scheduled_arrive"] = scheduled_arrive
             if actual_depart is not None:
-                kwargs["actualDepart"] = actual_depart
+                kwargs["actual_depart"] = actual_depart
             if actual_arrive is not None:
-                kwargs["actualArrive"] = actual_arrive
+                kwargs["actual_arrive"] = actual_arrive
 
             flightService.update_flight(flight_id, **kwargs)
 
             for pilot in pilots:
                 flightAssignmentService.assign_pilot_to_flight(flight_id=flight_id, pilot_id=pilot)
 
+            #TODO: say if it was successfully updated.
 
-        elif userinput == "3":
-            continueInput = True
+        elif user_input == "3":
+            continue_input = True
             origin = None
             destination = None
             status = None
-            scheduledDepart = None
-            scheduledArrive = None
-            actualDepart = None
-            actualArrive = None
-            while continueInput:
-                userinputraw = input("Please input the following details: \n"
-                                     "What is the airport code for the flights origin? \n")
+            scheduled_depart = None
+            scheduled_arrive = None
+            actual_depart = None
+            actual_arrive = None
+            print("Please input the following details: \n")
+            while continue_input:
+                user_input_raw = input("What is the airport code for the flights origin? \n")
 
-                if userinputraw.strip().lower() == "back":
-                    continueInput = False
-                elif userinputraw.strip().lower() == "find":
+                if user_input_raw.strip().lower() == "back":
+                    continue_input = False
+                elif user_input_raw.strip().lower() == "find":
                     print(find_helper("destination"))
                     continue
 
-                userinput = userinputraw.strip().upper()
+                user_input = user_input_raw.strip().upper()
 
-                if destinationService.destinationExists(userinput):
-                    origin = destinationService.getDestination(userinput).airportId
+                if destinationService.destination_exists(user_input):
+                    origin = destinationService.get_destination(user_input).airport_id
                     break
                 else:
+                    print(f"There is no airport with an id of {user_input} in the system. "
+                          f"Please try another id, or add your chosen airport to the system first.")
                     continue
 
-            while continueInput:
-                userinputraw = input("What is the airport code for the flights destination? \n")
+            while continue_input:
+                user_input_raw = input("What is the airport code for the flights destination? \n")
 
-                if userinputraw.strip().lower() == "back":
-                    continueInput = False
-                elif userinputraw.strip().lower() == "find":
+                if user_input_raw.strip().lower() == "back":
+                    continue_input = False
+                elif user_input_raw.strip().lower() == "find":
                     print(find_helper("destination"))
                     continue
 
-                userinput = userinputraw.strip().upper()
+                user_input = user_input_raw.strip().upper()
 
-                if destinationService.destinationExists(userinput):
-                    destination = destinationService.getDestination(userinput).airportId
+                if destinationService.destination_exists(user_input):
+                    destination = destinationService.get_destination(user_input).airport_id
                     break
                 else:
+                    print(f"There is no airport with an id of {user_input} in the system. "
+                          f"Please try another id, or add your chosen airport to the system first.")
                     continue
 
-            while continueInput:
-                userinputraw = input("Does this flight have a schedule yet? Y/N \n")
-                userinput = userinputraw.strip().lower()
+            while continue_input:
+                #TODO: either figure out a way to find a flight without a schedule or remove this option.
+                user_input_raw = input("Does this flight have a schedule yet? Y/N \n")
+                userinput = user_input_raw.strip().lower()
 
                 if userinput == "back":
-                    continueInput = False
-                elif userinput == "n":
                     break
                 elif userinput == "y":
                     status = "Scheduled"
 
-                    scheduledDepart = ask_for_datetime("departure")
-                    scheduledArrive = ask_for_datetime("arrival")
+                    scheduled_depart = ask_for_datetime("departure")
+                    scheduled_arrive = ask_for_datetime("arrival")
+                elif userinput != "n":
+                    break
 
-                flightService.addFlight(status=status,
-                                        originAirport=origin,
-                                        destinationAirport=destination,
-                                        scheduledDepart=scheduledDepart,
-                                        scheduledArrive=scheduledArrive,
-                                        actualDepart=actualDepart,
-                                        actualArrive=actualArrive
+                flightService.add_flight(status=status,
+                                        origin_airport=origin,
+                                        destination_airport=destination,
+                                        scheduled_depart=scheduled_depart,
+                                        scheduled_arrive=scheduled_arrive,
+                                        actual_depart=actual_depart,
+                                        actual_arrive=actual_arrive
                                         )
 
                 print("Flight successfully added!")
-                continueInput = False
+                continue_input = False
 
-        elif userinput == "4":
+        elif user_input == "4":
             while True:
-                userinputraw = input("Please enter the flight id to delete or 'find' to lookup the flight id. \n")
-                userinput = userinputraw.strip().lower()
+                user_input_raw = input("Please enter the flight id to delete or 'find' to lookup the flight id. \n")
+                user_input = user_input_raw.strip().lower()
 
-                if userinput == "find":
+                if user_input == "find":
                     print(find_helper("flight"))
                     continue
 
-                if userinput == "back":
+                if user_input == "back":
                     break
 
-                if userinput.isnumeric():
-                    if flightService.flightExists(int(userinput)):
-                        print(flightService.get_flight_details(int(userinput)))
-                        is_sure = input("Are you sure you wish to delete the above flight? Y/N")
+                if user_input.isnumeric():
+                    if flightService.flight_exists(int(user_input)):
+                        #TODO: print this nicer
+                        print(flightService.get_flight_details(int(user_input)))
+                        is_sure = input("Are you sure you wish to delete the above flight? Y/N: ")
                         if is_sure.strip().lower() == "y":
-                            flightService.deleteFlight(int(userinput))
-                            print(f"Flight with id {userinput} has been deleted.")
+                            flightService.delete_flight(int(user_input))
+                            print(f"Flight with id {user_input} has been deleted.")
+                            break
                         else:
-                            return
+                            print("Nothing has been deleted.")
+                            continue
                     else:
-                        print(f"There is no flight with id {userinput}")
+                        print(f"There is no flight with id {user_input}")
                 else:
                     print("That is not a valid flight id.")
 
-def pilotMenu(service: PilotService):
+def pilot_menu(service: PilotService):
     print("Pilot Information \n")
     while True:
         user_input_raw = input("Would you like to: \n"
@@ -495,12 +499,16 @@ def pilotMenu(service: PilotService):
                     continue
 
                 if pilot:
-                    print(f"Pilot: {pilot.id} ({pilot.active})\n"
+                    if pilot.active:
+                        active = "Active"
+                    else:
+                        active = "Inactive"
+                    print(f"Pilot: {pilot.id} ({active})\n"
                           f"Rank: {pilot.rank} \n"
                           f"Name: {pilot.first_name} {pilot.last_name} \n"
                           f"License Number: {pilot.license_number} \n"
                           f"Flight Hours: {pilot.experience_hours} \n"
-                          f"Home Airport: {destinationService.getDestination(pilot.home_airport).airportName}"
+                          f"Home Airport: {destinationService.get_destination(pilot.home_airport).airport_name}"
                           f" ({pilot.home_airport})\n")
                     break
                 else:
@@ -526,7 +534,7 @@ def pilotMenu(service: PilotService):
                     print(find_helper("pilot"))
                     continue
                 elif user_input.strip().isnumeric():
-                    if pilotService.pilotExists(int(user_input.strip())):
+                    if pilotService.pilot_exists(int(user_input.strip())):
                         pilot_id = int(user_input)
                         break
                     else:
@@ -603,7 +611,7 @@ def pilotMenu(service: PilotService):
                     if user_input.strip().lower() == "back":
                         return
                     else:
-                        if destinationService.destinationExists(user_input.strip().upper()):
+                        if destinationService.destination_exists(user_input.strip().upper()):
                             home_airport = user_input.strip().upper()
                             break
                         else:
@@ -695,11 +703,10 @@ def pilotMenu(service: PilotService):
 
             pilotService.update_pilot(pilot_id=pilot_id, **kwargs)
 
+            #TODO: say whether this was updated successfully.
+
 
         elif user_input == "3":
-            first_name = None
-            last_name = None
-            license_number = None
             rank = None
             experience_hours = None
             home_airport = None
@@ -721,10 +728,14 @@ def pilotMenu(service: PilotService):
             if user_input_raw.strip().lower() == "back": return
             else: license_number = user_input_raw.strip()
 
-            user_input_raw = input("Rank: ")
+            while rank is None:
+                user_input_raw = input("Rank: ")
 
-            if user_input_raw.strip().lower() == "back": return
-            else: rank = user_input_raw.strip().title()
+                if user_input_raw.strip().lower() == "back": return
+                elif user_input_raw.strip().title() in valid_rank:
+                    rank = user_input_raw.strip().title()
+                else:
+                    print("That is not a valid rank. Please enter either Captain, First Officer or Second Officer.")
 
 
             while experience_hours is None:
@@ -740,7 +751,7 @@ def pilotMenu(service: PilotService):
                 user_input_raw = input("Home Airport Id: ")
                 if user_input_raw.strip().lower() == "back": return
 
-                airport = destinationService.getDestination(user_input_raw.strip().upper())
+                airport = destinationService.get_destination(user_input_raw.strip().upper())
 
                 if airport:
                     home_airport = user_input_raw.strip().upper()
@@ -768,16 +779,16 @@ def pilotMenu(service: PilotService):
                     print(find_helper("pilot"))
                     continue
                 elif user_input.strip().isnumeric():
-                    if service.pilotExists(int(user_input.strip())):
+                    if service.pilot_exists(int(user_input.strip())):
                         pilot_id = int(user_input.strip())
                         #TODO: change this to now, after adding more flight assignments
                         start_date = datetime(2025, 10, 1)
                         flights = flightAssignmentService.get_schedule_for_pilot(pilot_id=pilot_id, start_date=start_date)
                         if len(flights) > 0:
                             for flight in flights:
-                                print(f"ID {flight.id}: {flight.status} {flight.originAirport} -> "
-                                      f"{flight.destinationAirport} scheduled to depart at {flight.scheduledDepart}"
-                                      f" and arrive at {flight.scheduledArrive}")
+                                print(f"ID {flight.id}: {flight.status} {flight.origin_airport} -> "
+                                      f"{flight.destination_airport} scheduled to depart at {flight.scheduled_depart}"
+                                      f" and arrive at {flight.scheduled_arrive}")
                             print("\n")
                             break
                         else:
@@ -800,7 +811,7 @@ def pilotMenu(service: PilotService):
                 if user_input.strip().lower() == "back":
                     return
                 elif user_input.strip().isnumeric():
-                    if pilotService.pilotExists(int(user_input.strip())):
+                    if pilotService.pilot_exists(int(user_input.strip())):
                         pilot = pilotService.get_pilot(int(user_input.strip()))
                         if pilot.active:
                             pilot_id = int(user_input.strip())
@@ -826,7 +837,7 @@ def pilotMenu(service: PilotService):
                 if user_input.strip().lower() == "back":
                     return
                 elif user_input.strip().isnumeric():
-                    if flightService.flightExists(int(user_input.strip())):
+                    if flightService.flight_exists(int(user_input.strip())):
                     #TODO: add some checks that the pilot is available and in the right location
                         flight_id = int(user_input.strip())
                         break
@@ -842,11 +853,12 @@ def pilotMenu(service: PilotService):
 
             if pilot_id is not None and flight_id is not None:
                 flightAssignmentService.assign_pilot_to_flight(pilot_id=pilot_id, flight_id=flight_id)
+                #TODO: say whether this was successful
 
         elif user_input == "6":
             while True:
-                userinputraw = input("Please enter the pilot id to delete or 'find' to lookup the flight id. \n")
-                userinput = userinputraw.strip().lower()
+                user_input_raw = input("Please enter the pilot id to delete or 'find' to lookup the flight id. \n")
+                userinput = user_input_raw.strip().lower()
 
                 if userinput == "find":
                     print(find_helper("pilot"))
@@ -856,15 +868,16 @@ def pilotMenu(service: PilotService):
                     break
 
                 if userinput.isnumeric():
-                    if pilotService.pilotExists(int(userinput)):
+                    if pilotService.pilot_exists(int(userinput)):
                         while True:
                             retire_raw = input("Would you like retire this pilot from active service instead of deleting their "
-                                               "data? Y/N")
+                                               "data? Y/N: ")
                             if retire_raw.strip().lower() == "back":
                                 return
                             elif retire_raw.strip().lower() == "y":
                                 pilotService.update_pilot(int(userinput), active=False)
-                                break
+                                #TODO: say whether this was successful
+                                return
                             elif retire_raw.strip().lower() == "n":
                                 pilot = pilotService.get_pilot(int(userinput))
                                 print(f"id: {pilot.id} -> {pilot.rank} {pilot.first_name} {pilot.last_name}")
@@ -881,21 +894,7 @@ def pilotMenu(service: PilotService):
                     else:
                         print(f"There is no pilot with an id of {userinput}")
 
-
-
-
-
-
-
-
-
-def assignPilot():
-    pass
-
-def viewPilotSchedule():
-    pass
-
-def destinationMenu(service: DestinationService):
+def destination_menu(service: DestinationService):
     print("Destination Information \n")
     while True:
         userinput = input("Would you like to: \n"
@@ -906,22 +905,28 @@ def destinationMenu(service: DestinationService):
                           "* input 'back' to return to main menu * \n")
 
         if userinput.strip().lower() == "1":
-            airportId = input("Please enter the airport code for the destination you would like to view or 'find'. \n")
-            if airportId.strip().lower() == "back":
-                continue
+            while True:
+                airport_id = input("Please enter the airport code for the destination you would like to view or 'find'. \n")
+                if airport_id.strip().lower() == "back":
+                    break
 
-            if airportId.strip().lower() == "find":
-                print(find_helper("destination"))
-                continue
+                if airport_id.strip().lower() == "find":
+                    print(find_helper("destination"))
+                    continue
 
-            airportId = airportId.strip().upper()
-            destination = service.getDestination(airportId)
+                airport_id = airport_id.strip().upper()
 
-            if destination:
-                print(f"Airport: {destination.airportName} ({destination.airportId}) "
-                      f"in {destination.city}, {destination.country}.")
-            else:
-                print(f"No destination found with airport code {airportId}\n")
+                if destinationService.destination_exists(airport_id):
+                    destination = service.get_destination(airport_id)
+                else:
+                    print(f"No destination found with airport code {airport_id}\n")
+                    continue
+
+                if destination:
+                    print(f"Airport: {destination.airport_name} ({destination.airport_id}) "
+                          f"in {destination.city}, {destination.country}. \n")
+                    break
+
 
         elif userinput.strip().lower() == "2":
             airport_id = None
@@ -938,7 +943,7 @@ def destinationMenu(service: DestinationService):
                     print(find_helper("destination"))
                     continue
                 else:
-                    if service.destinationExists(user_input.strip().upper()):
+                    if service.destination_exists(user_input.strip().upper()):
                         airport_id = user_input.strip().upper()
                     else:
                         print("That airport id does not exist.")
@@ -1017,17 +1022,17 @@ def destinationMenu(service: DestinationService):
             print("please answer the following questions regarding the new destination, "
                   "or input 'back' to return to the destination menu.")
 
-            airportId = input("What is the Id for this airport? ex. LHR for London Heathrow \n")
-            if airportId.strip().lower() == "back":
+            airport_id = input("What is the Id for this airport? ex. LHR for London Heathrow \n")
+            if airport_id.strip().lower() == "back":
                 continue
             else:
-                airportId = airportId.strip().upper()
+                airport_id = airport_id.strip().upper()
 
-            airportName = input("What is the name of this airport? \n")
-            if airportName.strip().lower() == "back":
+            airport_name = input("What is the name of this airport? \n")
+            if airport_name.strip().lower() == "back":
                 continue
             else:
-                airportName = airportName.strip().lower()
+                airport_name = airport_name.strip().lower()
 
 
             country = input("Please enter the country. \n")
@@ -1044,11 +1049,12 @@ def destinationMenu(service: DestinationService):
 
             try:
                 destinationService.add(
-                    airportId=airportId,
-                    airportName=airportName.title(),
+                    airport_id=airport_id,
+                    airport_name=airport_name.title(),
                     country=country.title(),
                     city=city.title()
                 )
+                print(f"Airport with id {airport_id} has been successfully added.")
             except Exception as e:
                 print(f"There was an error in creating that destination: {e}")
 
@@ -1083,11 +1089,11 @@ def main():
         if userinput.strip().lower() == "exit":
             return
         elif userinput.strip().lower() == "1":
-            flight_menu(flightService)
+            flight_menu()
         elif userinput.strip().lower() == "2":
-            pilotMenu(pilotService)
+            pilot_menu(pilotService)
         elif userinput.strip().lower() == "3":
-            destinationMenu(destinationService)
+            destination_menu(destinationService)
 
 main()
 
