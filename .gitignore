@@ -1,0 +1,20 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+
+# Ignore database files
+*.db
+
+# Ignore Python cache
+__pycache__/
+
+# Ignore IDE settings
+.idea/
+
+# Ignore build and dependency directories
+target/
+node_modules/
+
+# Ignore logs and temp files
+*.log
+*.tmp
