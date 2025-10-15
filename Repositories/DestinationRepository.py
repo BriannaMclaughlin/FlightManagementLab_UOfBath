@@ -111,7 +111,7 @@ class DestinationRepository(Repository[Destination]):
                 print(f"insert failed: {e}")
                 raise e
 
-    def update(self, airport_id: str, **kwargs: object) -> None:
+    def update(self, airport_id: str, **kwargs: object) -> bool:
         allowed_fields = {"airport_name", "country", "city"}
         set_clauses = []
         values = []
@@ -131,7 +131,9 @@ class DestinationRepository(Repository[Destination]):
                 f"UPDATE destinations SET {', '.join(set_clauses)} WHERE airport_id=?",
                 tuple(values),
             )
+            return cursor.rowcount > 0
 
-    def delete(self, airport_id: str) -> None:
+    def delete(self, airport_id: str) -> bool:
         with self.connect() as (db, cursor):
             cursor.execute("DELETE FROM destinations WHERE airport_id=?", (airport_id,))
+            return cursor.rowcount > 0

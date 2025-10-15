@@ -33,11 +33,11 @@ class PilotService:
 
         self.pilot_repo.add(pilot=pilot)
 
-    def delete_pilot(self, pilot_id):
-        self.pilot_repo.delete(pilot_id)
+    def delete_pilot(self, pilot_id) -> bool:
+        return self.pilot_repo.delete(pilot_id)
 
-    def update_pilot(self, pilot_id, **kwargs):
-        self.pilot_repo.update(pilot_id=pilot_id, **kwargs)
+    def update_pilot(self, pilot_id, **kwargs) -> bool:
+        return self.pilot_repo.update(pilot_id=pilot_id, **kwargs)
 
     def find_by_last_name(self, last_name: str) -> str:
         result =  self.pilot_repo.find_by_last_name(last_name)

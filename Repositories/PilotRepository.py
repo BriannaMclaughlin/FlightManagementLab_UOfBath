@@ -130,7 +130,7 @@ class PilotRepository(Repository[Pilot]):
                 db.rollback()
                 raise e
 
-    def update(self, pilot_id: int, **kwargs: object) -> None:
+    def update(self, pilot_id: int, **kwargs: object) -> bool:
         allowed_fields = {"first_name", "last_name", "license_number", "rank", "experience_hours", "home_airport", "active"}
 
         set_clauses = []
@@ -151,10 +151,12 @@ class PilotRepository(Repository[Pilot]):
                 f"UPDATE pilots SET {', '.join(set_clauses)} WHERE id=?",
                 tuple(values),
             )
+            return cursor.rowcount > 0
 
-    def delete(self, pilot_id: int) -> None:
+    def delete(self, pilot_id: int) -> bool:
         with self.connect() as (db, cursor):
             cursor.execute("DELETE FROM pilots WHERE id=?", (pilot_id,))
+            return cursor.rowcount > 0
 
     def find_by_last_name(self, last_name: str) -> list[Pilot]:
         with self.connect() as (db, cursor):

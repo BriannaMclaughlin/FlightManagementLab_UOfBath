@@ -49,8 +49,8 @@ class FlightService:
     def delete_flight(self, flight_id):
         self.flight_repo.delete(flight_id)
 
-    def update_flight(self, flight_id: int, **kwargs: object) -> None:
-        self.flight_repo.update(flight_id, **kwargs)
+    def update_flight(self, flight_id: int, **kwargs: object) -> bool:
+        return self.flight_repo.update(flight_id, **kwargs)
 
     def find_by_origin(self, origin: str, start: datetime, end: datetime) -> str:
         result = self.flight_repo.find_by_origin(origin, start, end)
