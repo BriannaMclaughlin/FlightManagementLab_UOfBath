@@ -177,25 +177,7 @@ def flight_menu():
                     continue
 
                 if flight_details is not None:
-                    to_print = (f"Flight: {flight_details.id} \n"
-                          f"Status: {flight_details.status} \n"
-                          f"Route: {flight_details.origin.get("city")} ({flight_details.origin.get("airport_id")}) to "
-                          f"{flight_details.destination.get("city")} ({flight_details.destination.get("airport_id")}) \n"
-                          f"Scheduled Departure: {flight_details.scheduled_depart} \n"
-                          f"Scheduled Arrival: {flight_details.scheduled_arrive} \n")
-                    if flight_details.actual_depart is not None:
-                        to_print += f"Actual Departure: {flight_details.actual_depart} \n"
-                    if flight_details.actual_arrive is not None:
-                        to_print += f"Actual Arrival: {flight_details.actual_arrive} \n"
-
-                    if len(flight_details.pilots) > 0:
-                        to_print += f"Pilots: \n"
-                        for pilot in flight_details.pilots:
-                            to_print += (f"Id: {pilot.get("id")}, {pilot.get("rank")} {pilot.get("first_name")} "
-                                         f"{pilot.get("last_name")} \n")
-                    else:
-                        to_print += "Pilots to be determined. \n"
-                    print(to_print)
+                    print(flightService.flight_details_to_string(flight_details))
                     break
                 else:
                     print(f"No flight found with id: {user_input}")
@@ -203,8 +185,6 @@ def flight_menu():
 
 
         elif user_input == "2":
-            #TODO: status can only change to complete if actual depart and arrive are completed,
-            # then flight hours must be added to each pilot.
             flight_id = None
             status = None
             scheduled_depart = None
@@ -287,6 +267,7 @@ def flight_menu():
                     return
                 elif user_input.strip().lower() == "y":
                     actual_depart = ask_for_datetime("depart")
+                    break
                 elif user_input.strip().lower() == "n" or user_input.strip().lower() == "":
                     break
                 else:
@@ -299,6 +280,7 @@ def flight_menu():
                     return
                 elif user_input.strip().lower() == "y":
                     actual_arrive = ask_for_datetime("arrive")
+                    break
                 elif user_input.strip().lower() == "n" or user_input.strip().lower() == "":
                     break
                 else:
@@ -345,6 +327,34 @@ def flight_menu():
                     continue
 
             kwargs = {}
+            flight = flightService.get_flight_details(flight_id)
+
+            if status == "In Flight":
+                if flight.actual_depart is not None or actual_depart is not None:
+                    if len(flight.pilots) > 0 or len(pilots) > 0:
+                        pass
+                    else:
+                        print(f"The status of Flight {flight_id} cannot be updated to 'In Flight' "
+                              f"without a pilot assigned.")
+                        return
+                else:
+                    print(f"The status of Flight {flight_id} cannot be updated to 'In Flight' "
+                          f"without an actual departure time. \n")
+                    return
+            elif status == "Completed":
+                if (flight.actual_depart is not None or actual_depart is not None) \
+                        and (flight.actual_arrive is not None or actual_arrive is not None):
+                    if len(flight.pilots) > 0 or len(pilots) > 0:
+                        pass
+                    else:
+                        print(f"The status of Flight {flight_id} cannot be updated to 'Completed' "
+                              f"without a pilot assigned. \n")
+                        return
+                else:
+                    print(f"The status of Flight {flight_id} cannot be updated to 'Completed' "
+                          f"without an actual departure and arrival time. \n")
+                    return
+
 
             if status is not None:
                 kwargs["status"] = status
@@ -360,7 +370,25 @@ def flight_menu():
             if len(kwargs) > 0:
                 updated = flightService.update_flight(flight_id, **kwargs)
                 if updated:
-                    print(f"Flight details for flight {flight_id} have been successfully updated. ✅")
+                    print(f"Flight details for flight {flight_id} have been successfully updated. ✅ \n")
+                    if status == "Completed":
+                        updated_flight = flightService.get_flight(flight_id)
+                        updated_flight_details = flightService.get_flight_details(flight_id)
+                        flight_delta = updated_flight.actual_arrive - updated_flight.actual_depart
+                        flight_hours = int(flight_delta.total_seconds() / 3600)
+                        for pilot_info in updated_flight_details.pilots:
+                            pilot = pilotService.get_pilot(pilot_id=pilot_info["id"])
+                            hours_added = pilotService.add_flight_hours(pilot.id, flight_hours)
+                            if hours_added:
+                                print(f"{pilot.rank} {pilot.first_name} {pilot.last_name}'s experience hours have been "
+                                      f"increased by {str(flight_hours)} hour(s). \n")
+                            else:
+                                print(f"An error has occurred and the flight hours could not be added to {pilot.rank} "
+                                      f"{pilot.first_name} {pilot.last_name}'s experience hours. \n "
+                                      f"Please attempt to update their hours directly.")
+
+                else:
+                    print(f"An error has occurred and flight {flight_id} has NOT been updated. \n")
 
             pilots_assigned = 0
             for pilot in pilots:
@@ -370,6 +398,8 @@ def flight_menu():
 
             if pilots_assigned > 0:
                 print(f"{pilots_assigned} pilot(s) successfully assigned to flight {flight_id}. ✅ \n")
+            elif len(kwargs) == 0:
+                print(f"No details have been inputted to update flight {flight_id}")
 
 
         elif user_input == "3":
@@ -461,8 +491,8 @@ def flight_menu():
 
                 if user_input.isnumeric():
                     if flightService.flight_exists(int(user_input)):
-                        #TODO: print this nicer
-                        print(flightService.get_flight_details(int(user_input)))
+                        flight_details = flightService.get_flight_details(int(user_input))
+                        print(flightService.flight_details_to_string(flight_details))
                         is_sure = input("Are you sure you wish to delete the above flight? Y/N: ")
                         if is_sure.strip().lower() == "y":
                             flightService.delete_flight(int(user_input))
@@ -852,6 +882,7 @@ def pilot_menu(service: PilotService):
                 elif user_input.strip().isnumeric():
                     if flightService.flight_exists(int(user_input.strip())):
                     #TODO: add some checks that the pilot is available and in the right location
+                    #TODO: add checks that pilot hasn't flown too many hours.
                         flight_id = int(user_input.strip())
                         break
                     else:

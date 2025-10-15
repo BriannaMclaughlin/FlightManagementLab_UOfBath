@@ -86,13 +86,24 @@ class FlightRepository(Repository[Flight]):
             row = cursor.fetchone()
             if row is None:
                 raise ValueError(f"Flight with id {flight_id} does not exist")
+
+            def parse_dt(value):
+                if value is None:
+                    return None
+                if isinstance(value, datetime.datetime):
+                    return value
+                try:
+                    return datetime.datetime.fromisoformat(value)
+                except Exception:
+                    return datetime.datetime.strptime(value, "%Y-%m-%d %H:%M")
+
             return Flight(
                 id=row["id"],
                 status=row["status"],
-                scheduled_depart=row["scheduled_depart"],
-                scheduled_arrive=row["scheduled_arrive"],
-                actual_depart=row["actual_depart"],
-                actual_arrive=row["actual_arrive"],
+                scheduled_depart=parse_dt(row["scheduled_depart"]),
+                scheduled_arrive=parse_dt(row["scheduled_arrive"]),
+                actual_depart=parse_dt(row["actual_depart"]),
+                actual_arrive=parse_dt(row["actual_arrive"]),
                 origin_airport=row["origin_airport_id"],
                 destination_airport=row["destination_airport_id"])
 

@@ -175,3 +175,8 @@ class PilotRepository(Repository[Pilot]):
                 )
                 for row in rows
             ]
+
+    def add_flight_hours(self, pilot_id: int, hours: int) -> bool:
+        pilot = self.get(pilot_id)
+        pilot_hours = pilot.experience_hours + hours
+        return self.update(pilot_id, experience_hours=pilot_hours)
