@@ -64,3 +64,6 @@ class PilotService:
                 return True
         except ValueError:
             return False
+
+    def add_flight_hours(self, pilot_id: int, hours: int) -> bool:
+        return self.pilot_repo.add_flight_hours(pilot_id=pilot_id, hours=hours)
