@@ -191,7 +191,7 @@ class FlightRepository(Repository[Flight]):
                 db.rollback()
                 raise e
 
-    def update(self, flight_id: int, **kwargs: object) -> None:
+    def update(self, flight_id: int, **kwargs: object) -> bool:
         allowed_fields = {"status", "scheduled_depart", "scheduled_arrive", "actual_depart", "actual_arrive",
                           "origin_airport", "destination_airport"}
         set_clauses = []
@@ -212,6 +212,7 @@ class FlightRepository(Repository[Flight]):
                 f"UPDATE flights SET {', '.join(set_clauses)} WHERE id=?",
                 tuple(values),
             )
+            return cursor.rowcount > 0
 
     def delete(self, flight_id: int) -> None:
         with self.connect() as (db, cursor):

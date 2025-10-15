@@ -357,12 +357,20 @@ def flight_menu():
             if actual_arrive is not None:
                 kwargs["actual_arrive"] = actual_arrive
 
-            flightService.update_flight(flight_id, **kwargs)
+            if len(kwargs) > 0:
+                updated = flightService.update_flight(flight_id, **kwargs)
+                if updated:
+                    print(f"Flight details for flight {flight_id} have been successfully updated. ✅")
 
+            pilots_assigned = 0
             for pilot in pilots:
-                flightAssignmentService.assign_pilot_to_flight(flight_id=flight_id, pilot_id=pilot)
+                assigned = flightAssignmentService.assign_pilot_to_flight(flight_id=flight_id, pilot_id=pilot)
+                if assigned:
+                    pilots_assigned += 1
 
-            #TODO: say if it was successfully updated.
+            if pilots_assigned > 0:
+                print(f"{pilots_assigned} pilot(s) successfully assigned to flight {flight_id}. ✅ \n")
+
 
         elif user_input == "3":
             continue_input = True
@@ -701,9 +709,14 @@ def pilot_menu(service: PilotService):
             if active is not None:
                 kwargs["active"] = active
 
-            pilotService.update_pilot(pilot_id=pilot_id, **kwargs)
-
-            #TODO: say whether this was updated successfully.
+            if len(kwargs) > 0:
+                updated = pilotService.update_pilot(pilot_id=pilot_id, **kwargs)
+                if updated:
+                    print(f"Pilot {pilot_id} has been successfully updated. ✅ \n")
+                else:
+                    print(f"There was an error in updating pilot {pilot_id}. ✅ \n")
+            else:
+                print("No details were chosen to be updated.")
 
 
         elif user_input == "3":
@@ -852,8 +865,9 @@ def pilot_menu(service: PilotService):
                     continue
 
             if pilot_id is not None and flight_id is not None:
-                flightAssignmentService.assign_pilot_to_flight(pilot_id=pilot_id, flight_id=flight_id)
-                #TODO: say whether this was successful
+                assigned = flightAssignmentService.assign_pilot_to_flight(pilot_id=pilot_id, flight_id=flight_id)
+                if assigned:
+                    print(f"Pilot {pilot_id} has been successfully assigned to flight {flight_id}. ✅ \n")
 
         elif user_input == "6":
             while True:
@@ -875,17 +889,25 @@ def pilot_menu(service: PilotService):
                             if retire_raw.strip().lower() == "back":
                                 return
                             elif retire_raw.strip().lower() == "y":
-                                pilotService.update_pilot(int(userinput), active=False)
-                                #TODO: say whether this was successful
-                                return
+                                updated = pilotService.update_pilot(int(userinput), active=False)
+                                if updated:
+                                    print(f"Pilot {userinput} has been retired from active service.")
+                                    return
+                                else:
+                                    print(f"An error has occurred and {userinput} has not been updated.")
+                                    return
                             elif retire_raw.strip().lower() == "n":
                                 pilot = pilotService.get_pilot(int(userinput))
                                 print(f"id: {pilot.id} -> {pilot.rank} {pilot.first_name} {pilot.last_name}")
                                 is_sure = input("Are you sure you with to delete the above pilot? Y/N")
                                 if is_sure.strip().lower() == "y":
-                                    pilotService.delete_pilot(int(userinput))
-                                    print(f"Flight with id {userinput} has been deleted.")
-                                    break
+                                    delete = pilotService.delete_pilot(int(userinput))
+                                    if delete:
+                                        print(f"Flight with id {userinput} has been deleted.")
+                                        break
+                                    else:
+                                        print(f"An error has occurred and Pilot {userinput} has NOT been deleted.")
+                                        break
                                 else:
                                     print(f"Pilot with id {pilot.id} has NOT been deleted.")
                             else:
@@ -1014,9 +1036,15 @@ def destination_menu(service: DestinationService):
             if city is not None:
                 kwargs["city"] = city
 
-            service.update(airport_id=airport_id, **kwargs)
+            if len(kwargs) > 0:
+                updated = destinationService.update(airport_id=airport_id, **kwargs)
+                if updated:
+                    print(f"Airport {airport_id} has been successfully updated. ✅ \n")
+                else:
+                    print(f"An error has occurred and airport {airport_id} has NOT been updated. \n")
+            else:
+                print(f"No details were chosen to be updated for airport {airport_id}.")
 
-            #TODO: add is successfully updated.
 
         elif userinput.strip().lower() == "3":
             print("please answer the following questions regarding the new destination, "
@@ -1060,8 +1088,39 @@ def destination_menu(service: DestinationService):
 
 
         elif userinput.strip().lower() == "4":
-            #TODO
-            pass
+            while True:
+                user_input_raw = input("Please enter the airport id to delete or 'find' to lookup the airport id. \n")
+                user_input = user_input_raw.strip().lower()
+
+                if user_input == "find":
+                    print(find_helper("destination"))
+                    continue
+
+                if user_input == "back":
+                    break
+
+                user_input = user_input.upper()
+
+                if destinationService.destination_exists(user_input):
+                        while True:
+                                destination = destinationService.get_destination(user_input)
+                                print(f"Airport id: {destination.id} -> {destination.airport_name}, {destination.city},"
+                                      f" {destination.country}")
+                                is_sure = input("Are you sure you with to delete the above destination? Y/N: ")
+                                if is_sure.strip().lower() == "y":
+                                    delete = destinationService.delete(destination.airport_id)
+                                    if delete:
+                                        print(f"Destination with airport id {destination.airport_id} has been deleted.")
+                                        break
+                                    else:
+                                        print(f"An error has occurred and the destination with airport id "
+                                              f"{destination.airport_id} has NOT been deleted.")
+                                        break
+                                elif is_sure.strip().lower() == "n":
+                                    print(f"Destination with airport id {destination.airport_id} has NOT been deleted.")
+                                else:
+                                    print("That is not a valid input. Please input y or n")
+                                    continue
 
         elif userinput.strip().lower() == "back":
             return

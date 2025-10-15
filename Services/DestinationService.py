@@ -45,5 +45,8 @@ class DestinationService:
         else:
             self.destination_repo.add(**kwargs)
 
-    def update(self, airport_id: str, **kwargs) -> None:
-        self.destination_repo.update(airport_id=airport_id, **kwargs)
+    def update(self, airport_id: str, **kwargs) -> bool:
+        return self.destination_repo.update(airport_id=airport_id, **kwargs)
+
+    def delete(self, airport_id: str) -> bool:
+        return self.destination_repo.delete(airport_id)
