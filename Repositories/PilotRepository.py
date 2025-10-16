@@ -1,4 +1,5 @@
 import contextlib
+import datetime
 import sqlite3
 
 from .Repository import Repository
@@ -180,3 +181,36 @@ class PilotRepository(Repository[Pilot]):
         pilot = self.get(pilot_id)
         pilot_hours = pilot.experience_hours + hours
         return self.update(pilot_id, experience_hours=pilot_hours)
+
+    def get_daily_flight_hours_for_pilot(self, pilot_id: int, date: datetime):
+        with self.connect() as (db, cursor):
+            cursor.execute("""
+            WITH flight_times AS (
+                SELECT
+                    f.id,
+                    fa.pilot_id,
+                    COALESCE(f.actual_depart, f.scheduled_depart) AS depart_time,
+                    COALESCE(f.actual_arrive, f.scheduled_arrive) AS arrive_time
+                FROM flights f
+                JOIN flight_assignment fa ON fa.flight_id = f.id
+                WHERE fa.pilot_id = ?
+            )
+            SELECT 
+                SUM(
+                    (
+                        JULIANDAY(
+                            MIN(arrive_time, DATETIME(?, '+1 day'))
+                        )
+                        -
+                        JULIANDAY(
+                            MAX(depart_time, DATETIME(?, 'start of day'))
+                        )
+                    ) * 24
+                ) as total_hours
+            FROM flight_times
+            WHERE 
+                arrive_time > DATETIME(?, 'start of day')
+                AND depart_time < DATETIME(?, '+1 day');
+            """, (pilot_id, date, date, date, date))
+            row = cursor.fetchone()
+            return row["total_hours"] if row["total_hours"] is not None else 0.00
