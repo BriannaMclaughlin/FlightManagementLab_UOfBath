@@ -1,3 +1,7 @@
+from datetime import datetime
+from operator import truediv
+
+from FlightManagementLab_UOfBath.Entities.Flight import Flight
 from FlightManagementLab_UOfBath.Entities.Pilot import Pilot
 from FlightManagementLab_UOfBath.Repositories.PilotRepository import PilotRepository
 
@@ -67,3 +71,46 @@ class PilotService:
 
     def add_flight_hours(self, pilot_id: int, hours: int) -> bool:
         return self.pilot_repo.add_flight_hours(pilot_id=pilot_id, hours=hours)
+
+    def daily_hours_allowed(self, pilot_id: int, date: datetime, expected_hours: int) -> bool:
+        current_hours = self.pilot_repo.get_daily_flight_hours_for_pilot(pilot_id, date)
+        requested_hours = int(current_hours) + expected_hours
+        if requested_hours <= 8.0:
+            return True
+        else:
+            return False
+
+    def check_hours(self, pilot_id: int, flight: Flight) -> bool:
+        depart_day = flight.scheduled_depart.date()
+        arrive_day = flight.scheduled_arrive.date()
+
+        if depart_day == arrive_day:
+            expected_hours = int((flight.scheduled_arrive - flight.scheduled_depart).total_seconds() / 3600)
+            allowed = self.daily_hours_allowed(pilot_id, depart_day, expected_hours)
+            if allowed is False:
+                print(f"Pilot {pilot_id} cannot be assigned to {flight.id}. ❌ \n"
+                      f"Pilots are allowed to be scheduled for 8 hours a day, "
+                      f"{expected_hours} hours will put Pilot {pilot_id} above this limit.")
+            return allowed
+        else:
+            day_1_expected_hours = int((datetime.combine(flight.scheduled_depart.date(), datetime.max.time())
+                                    - flight.scheduled_depart).total_seconds() / 3600)
+            day_2_expected_hours = int((flight.scheduled_arrive
+                                    - datetime.combine(flight.scheduled_arrive.date(), datetime.min.time())).total_seconds() / 3600)
+            day_1_allowed = self.daily_hours_allowed(pilot_id, depart_day, day_1_expected_hours)
+            day_2_allowed = self.daily_hours_allowed(pilot_id, arrive_day, day_2_expected_hours)
+
+            if day_1_allowed is False:
+                print(f"Pilot {pilot_id} cannot be assigned to {flight.id}. ❌ \n"
+                      f"Pilots are allowed to be scheduled for 8 hours a day, "
+                      f"{day_1_expected_hours} hours will put Pilot {pilot_id} above this limit on {depart_day}.")
+
+            if day_2_allowed is False:
+                print(f"Pilot {pilot_id} cannot be assigned to {flight.id}. ❌ \n"
+                      f"Pilots are allowed to be scheduled for 8 hours a day. "
+                      f"{day_2_expected_hours} hours will put Pilot {pilot_id} above this limit on {arrive_day}.")
+
+            return day_1_allowed and day_2_allowed
+
+
+

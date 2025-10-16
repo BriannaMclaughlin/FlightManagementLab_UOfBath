@@ -212,6 +212,7 @@ def flight_menu():
                     print("That is not a valid input")
                     continue
 
+            flight = flightService.get_flight(flight_id)
             print("For each of the below items, input Y to update or N to skip: \n")
 
             while True:
@@ -327,11 +328,11 @@ def flight_menu():
                     continue
 
             kwargs = {}
-            flight = flightService.get_flight_details(flight_id)
+            flight_details = flightService.get_flight_details(flight_id)
 
             if status == "In Flight":
                 if flight.actual_depart is not None or actual_depart is not None:
-                    if len(flight.pilots) > 0 or len(pilots) > 0:
+                    if len(flight_details.pilots) > 0 or len(pilots) > 0:
                         pass
                     else:
                         print(f"The status of Flight {flight_id} cannot be updated to 'In Flight' "
@@ -392,9 +393,10 @@ def flight_menu():
 
             pilots_assigned = 0
             for pilot in pilots:
-                assigned = flightAssignmentService.assign_pilot_to_flight(flight_id=flight_id, pilot_id=pilot)
-                if assigned:
-                    pilots_assigned += 1
+                if pilotService.check_hours(pilot, flight):
+                    assigned = flightAssignmentService.assign_pilot_to_flight(flight_id=flight_id, pilot_id=pilot)
+                    if assigned:
+                        pilots_assigned += 1
 
             if pilots_assigned > 0:
                 print(f"{pilots_assigned} pilot(s) successfully assigned to flight {flight_id}. ✅ \n")
@@ -881,8 +883,10 @@ def pilot_menu(service: PilotService):
                     return
                 elif user_input.strip().isnumeric():
                     if flightService.flight_exists(int(user_input.strip())):
+                        flight = flightService.get_flight(int(user_input.strip()))
+                        if pilotService.check_hours(pilot_id, flight) is False:
+                            break
                     #TODO: add some checks that the pilot is available and in the right location
-                    #TODO: add checks that pilot hasn't flown too many hours.
                         flight_id = int(user_input.strip())
                         break
                     else:
