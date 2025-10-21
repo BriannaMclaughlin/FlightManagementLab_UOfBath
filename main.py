@@ -1139,7 +1139,7 @@ def destination_menu(service: DestinationService):
                 if destinationService.destination_exists(user_input):
                         while True:
                                 destination = destinationService.get_destination(user_input)
-                                print(f"Airport id: {destination.id} -> {destination.airport_name}, {destination.city},"
+                                print(f"Airport id: {destination.airport_id} -> {destination.airport_name}, {destination.city},"
                                       f" {destination.country}")
                                 is_sure = input("Are you sure you with to delete the above destination? Y/N: ")
                                 if is_sure.strip().lower() == "y":

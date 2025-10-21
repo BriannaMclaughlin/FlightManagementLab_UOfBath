@@ -38,7 +38,7 @@ class FlightRepository(Repository[Flight]):
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS flights (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    status TEXT,
+                    status TEXT NOT NULL,
                     scheduled_depart INTEGER,
                     scheduled_arrive INTEGER,
                     actual_depart INTEGER,
