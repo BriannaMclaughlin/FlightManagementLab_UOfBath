@@ -39,7 +39,8 @@ class PilotRepository(Repository[Pilot]):
                     rank TEXT NOT NULL,
                     experience_hours INTEGER NOT NULL,
                     home_airport TEXT NOT NULL,
-                    active INTEGER NOT NULL CHECK (active IN (0, 1))
+                    active INTEGER NOT NULL CHECK (active IN (0, 1)),
+                    FOREIGN KEY (home_airport) REFERENCES destinations(airport_id)
                 )
             """)
 

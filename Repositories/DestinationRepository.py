@@ -33,9 +33,9 @@ class DestinationRepository(Repository[Destination]):
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS destinations (
                     airport_id VARCHAR PRIMARY KEY,
-                    airport_name VARCHAR,
-                    country TEXT,
-                    city TEXT
+                    airport_name VARCHAR NOT NULL,
+                    country VARCHAR NOT NULL,
+                    city VARCHAR NOT NULL
                 )
             """)
 
